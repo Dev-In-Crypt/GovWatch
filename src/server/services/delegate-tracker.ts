@@ -6,12 +6,25 @@ import { delegates, delegateDaoActivity, votes, proposals, daos } from '../db/sc
  * Materialise delegate profiles from the votes table.
  * For every distinct voter we ensure a delegates row, then rebuild the
  * per-DAO activity rollup.
+ *
+ * Paginated to stay within Vercel's 300 s function timeout: pass `offset`
+ * and `limit` to process a chunk; the cron workflow walks chunks daily.
+ *
+ * Returns `done: true` when the requested chunk yielded fewer rows than the
+ * limit (meaning we've reached the tail of the top-voters list).
  */
-export async function rebuildDelegateProfiles(limitVoters = 5000): Promise<{
+export async function rebuildDelegateProfiles(opts: {
+  limit?: number;
+  offset?: number;
+} = {}): Promise<{
   delegates: number;
   activities: number;
+  done: boolean;
 }> {
-  // Discover top voters by total votes cast
+  const limit = opts.limit ?? 300;
+  const offset = opts.offset ?? 0;
+
+  // Discover top voters by total votes cast — paginated by (offset, limit)
   const topVoters = await db
     .select({
       address: votes.voterAddress,
@@ -20,7 +33,8 @@ export async function rebuildDelegateProfiles(limitVoters = 5000): Promise<{
     .from(votes)
     .groupBy(votes.voterAddress)
     .orderBy(sql`count(*) desc`)
-    .limit(limitVoters);
+    .limit(limit)
+    .offset(offset);
 
   let delegateCount = 0;
   let activityCount = 0;
@@ -114,7 +128,13 @@ export async function rebuildDelegateProfiles(limitVoters = 5000): Promise<{
     delegateCount++;
   }
 
-  return { delegates: delegateCount, activities: activityCount };
+  // `done` signals to the workflow runner that we've reached the tail of the
+  // top-voters list (this chunk returned fewer rows than requested).
+  return {
+    delegates: delegateCount,
+    activities: activityCount,
+    done: topVoters.length < limit,
+  };
 }
 
 /**

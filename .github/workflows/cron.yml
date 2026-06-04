@@ -12,7 +12,7 @@ on:
     - cron: '0 3 * * *'
     # Weekly digest — Monday 08:00 UTC
     - cron: '0 8 * * 1'
-    # Delegate profiles rebuild — daily at 04:00 UTC
+    # Delegate profiles rebuild — daily at 04:00 UTC (paginated)
     - cron: '0 4 * * *'
 
   # Allow manual triggering from the Actions tab
@@ -39,7 +39,8 @@ concurrency:
 jobs:
   ping:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # 60 min upper bound covers a full paginated rebuild-delegates walk.
+    timeout-minutes: 60
     steps:
       - name: Resolve endpoints for this trigger
         id: plan
@@ -64,7 +65,7 @@ jobs:
               echo "endpoints=send-digest" >> $GITHUB_OUTPUT
               ;;
             "0 4 * * *")
-              echo "endpoints=rebuild-delegates" >> $GITHUB_OUTPUT
+              echo "endpoints=__delegates_pages__" >> $GITHUB_OUTPUT
               ;;
             *)
               echo "endpoints=$MANUAL" >> $GITHUB_OUTPUT
@@ -85,13 +86,52 @@ jobs:
             exit 1
           fi
 
-          IFS=',' read -ra JOBS <<< "${{ steps.plan.outputs.endpoints }}"
+          ENDPOINTS="${{ steps.plan.outputs.endpoints }}"
+
+          # workflow_dispatch with rebuild-delegates → also go through paginated path
+          if [ "$ENDPOINTS" = "rebuild-delegates" ]; then
+            ENDPOINTS="__delegates_pages__"
+          fi
+
+          # Special-case: delegate rebuild — walk through pages of 300 voters
+          # until the API reports done:true (each call must fit Vercel's 300s).
+          if [ "$ENDPOINTS" = "__delegates_pages__" ]; then
+            offset=0
+            limit=300
+            max_pages=12   # safety cap — supports up to 3600 delegates / run
+            page=0
+            while [ "$page" -lt "$max_pages" ]; do
+              url="$APP_URL/api/cron/rebuild-delegates?offset=$offset&limit=$limit"
+              echo "→ rebuild-delegates page $page  offset=$offset"
+              code=$(curl -s -o /tmp/body.json -w "%{http_code}" \
+                -H "Authorization: Bearer $CRON_SECRET" \
+                --max-time 290 \
+                "$url" || echo "000")
+              echo "← HTTP $code"
+              cat /tmp/body.json || true
+              echo ""
+              if [ "$code" != "200" ]; then
+                echo "::warning::page $page returned $code — aborting walk"
+                break
+              fi
+              done_flag=$(jq -r '.result.done // false' < /tmp/body.json 2>/dev/null || echo "false")
+              if [ "$done_flag" = "true" ]; then
+                echo "✓ delegate rebuild complete after $((page + 1)) pages"
+                break
+              fi
+              offset=$((offset + limit))
+              page=$((page + 1))
+            done
+            exit 0
+          fi
+
+          IFS=',' read -ra JOBS <<< "$ENDPOINTS"
           for job in "${JOBS[@]}"; do
             url="$APP_URL/api/cron/$job"
             echo "→ POST $url"
             code=$(curl -s -o /tmp/body.json -w "%{http_code}" \
               -H "Authorization: Bearer $CRON_SECRET" \
-              --max-time 240 \
+              --max-time 290 \
               "$url" || echo "000")
             echo "← HTTP $code"
             cat /tmp/body.json || true
