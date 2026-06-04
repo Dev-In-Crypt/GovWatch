@@ -190,13 +190,36 @@ export async function syncVotesForProposal(proposalExternalId: string): Promise<
   return inserted;
 }
 
-export async function syncAllActiveVotes(): Promise<{ proposals: number; votes: number }> {
-  const active = await db.select().from(proposals).where(eq(proposals.state, 'active'));
+/**
+ * Sync votes for active proposals. Paginated: process at most `limit`
+ * proposals starting at `offset` (ordered deterministically by id).
+ * Each call must fit Vercel's 300s function timeout; the cron workflow
+ * walks pages until `done: true`.
+ */
+export async function syncAllActiveVotes(
+  opts: { offset?: number; limit?: number } = {},
+): Promise<{ proposals: number; votes: number; done: boolean; offset: number; limit: number }> {
+  const limit = opts.limit ?? 5;
+  const offset = opts.offset ?? 0;
+  const active = await db
+    .select()
+    .from(proposals)
+    .where(eq(proposals.state, 'active'))
+    .orderBy(proposals.id)
+    .limit(limit)
+    .offset(offset);
+
   let totalVotes = 0;
   for (const p of active) {
     totalVotes += await syncVotesForProposal(p.externalId);
   }
-  return { proposals: active.length, votes: totalVotes };
+  return {
+    proposals: active.length,
+    votes: totalVotes,
+    done: active.length < limit,
+    offset,
+    limit,
+  };
 }
 
 export async function syncRecentlyClosedVotes(): Promise<{ proposals: number; votes: number }> {

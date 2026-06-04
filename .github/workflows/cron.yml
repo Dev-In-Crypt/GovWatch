@@ -50,7 +50,7 @@ jobs:
 
           case "$SCHED" in
             "*/5 * * * *")
-              echo "endpoints=sync-proposals,sync-votes" >> $GITHUB_OUTPUT
+              echo "endpoints=sync-proposals,__votes_pages__" >> $GITHUB_OUTPUT
               ;;
             "*/15 * * * *")
               echo "endpoints=generate-summaries" >> $GITHUB_OUTPUT
@@ -92,17 +92,23 @@ jobs:
           if [ "$ENDPOINTS" = "rebuild-delegates" ]; then
             ENDPOINTS="__delegates_pages__"
           fi
+          # workflow_dispatch with sync-votes → also paginated path
+          if [ "$ENDPOINTS" = "sync-votes" ]; then
+            ENDPOINTS="__votes_pages__"
+          fi
 
-          # Special-case: delegate rebuild — walk through pages of 300 voters
-          # until the API reports done:true (each call must fit Vercel's 300s).
-          if [ "$ENDPOINTS" = "__delegates_pages__" ]; then
-            offset=0
-            limit=300
-            max_pages=12   # safety cap — supports up to 3600 delegates / run
-            page=0
+          # Helper: walk paginated cron endpoint until done:true
+          # Args: 1=label  2=endpoint  3=limit  4=max_pages
+          walk_pages() {
+            local label="$1"
+            local endpoint="$2"
+            local limit="$3"
+            local max_pages="$4"
+            local offset=0
+            local page=0
             while [ "$page" -lt "$max_pages" ]; do
-              url="$APP_URL/api/cron/rebuild-delegates?offset=$offset&limit=$limit"
-              echo "→ rebuild-delegates page $page  offset=$offset"
+              url="$APP_URL/api/cron/$endpoint?offset=$offset&limit=$limit"
+              echo "→ $label page $page  offset=$offset"
               code=$(curl -s -o /tmp/body.json -w "%{http_code}" \
                 -H "Authorization: Bearer $CRON_SECRET" \
                 --max-time 290 \
@@ -111,22 +117,31 @@ jobs:
               cat /tmp/body.json || true
               echo ""
               if [ "$code" != "200" ]; then
-                echo "::warning::page $page returned $code — aborting walk"
-                break
+                echo "::warning::$label page $page returned $code — aborting walk"
+                return 1
               fi
               done_flag=$(jq -r '.result.done // false' < /tmp/body.json 2>/dev/null || echo "false")
               if [ "$done_flag" = "true" ]; then
-                echo "✓ delegate rebuild complete after $((page + 1)) pages"
-                break
+                echo "✓ $label complete after $((page + 1)) pages"
+                return 0
               fi
               offset=$((offset + limit))
               page=$((page + 1))
             done
-            exit 0
-          fi
+          }
 
+          # Iterate comma-separated endpoint list; expand __*_pages__ tokens.
           IFS=',' read -ra JOBS <<< "$ENDPOINTS"
           for job in "${JOBS[@]}"; do
+            if [ "$job" = "__delegates_pages__" ]; then
+              walk_pages "rebuild-delegates" "rebuild-delegates" 300 12 || true
+              continue
+            fi
+            if [ "$job" = "__votes_pages__" ]; then
+              walk_pages "sync-votes" "sync-votes" 5 12 || true
+              continue
+            fi
+
             url="$APP_URL/api/cron/$job"
             echo "→ POST $url"
             code=$(curl -s -o /tmp/body.json -w "%{http_code}" \

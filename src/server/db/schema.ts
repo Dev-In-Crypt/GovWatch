@@ -259,6 +259,11 @@ export const users = pgTable('users', {
 // =============================================
 // NEXTAUTH TABLES
 // =============================================
+// The `accounts` table is required by the NextAuth Drizzle adapter as a typed
+// reference, but is only populated when an OAuth/OIDC provider (Google, GitHub,
+// etc.) is wired up. With the Resend magic-link provider we use, NextAuth
+// writes only to `users` + `sessions` + `verification_tokens`. Empty `accounts`
+// is expected, not a bug.
 export const accounts = pgTable(
   'accounts',
   {

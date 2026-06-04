@@ -13,8 +13,8 @@ const LLAMA_SLUG_MAP: Record<string, string> = {
   uniswap: 'uniswap',
   aave: 'aave',
   ens: 'ens',
-  arbitrum: 'arbitrum-foundation',
-  optimism: 'optimism',
+  arbitrum: 'arbitrum-dao', // 'arbitrum-foundation' 400s on /treasury endpoint
+  optimism: 'optimism-collective', // 'optimism' 400s on /treasury endpoint
   gitcoin: 'gitcoin',
   apecoin: 'apecoin-dao',
   balancer: 'balancer',
@@ -50,10 +50,18 @@ const LLAMA_SLUG_MAP: Record<string, string> = {
   'ens-security': 'ens', // ENS Security Council shares ENS treasury
 };
 
+/**
+ * DeFiLlama /treasury/{slug} returns a protocol-shaped object:
+ *   { id, name, currentChainTvls: { ethereum: 123, polygon: 45, ... },
+ *     tvl: [{ date, totalLiquidityUSD }, ...], ... }
+ *
+ * The "treasury" value is the current sum of currentChainTvls — that's the
+ * real-time USD across all chains. tvl[] is daily historical snapshots we
+ * use as a fallback if currentChainTvls is missing.
+ */
 interface TreasuryResponse {
-  // Llama treasury endpoint returns an array of token holdings; we sum USD value.
-  tokensInUsd?: Array<{ date?: number; tokens?: Record<string, number> }>;
-  currentTreasuryUsd?: number;
+  currentChainTvls?: Record<string, number>;
+  tvl?: Array<{ date?: number; totalLiquidityUSD?: number }>;
 }
 
 async function fetchTreasury(llamaSlug: string): Promise<number | null> {
@@ -61,15 +69,30 @@ async function fetchTreasury(llamaSlug: string): Promise<number | null> {
     const r = await fetch(`https://api.llama.fi/treasury/${llamaSlug}`, {
       headers: { 'user-agent': 'daosentinel/0.1' },
       // Llama has no auth but is sometimes slow.
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(20_000),
     });
-    if (!r.ok) return null;
+    if (!r.ok) {
+      console.warn(`[treasury] ${llamaSlug} HTTP ${r.status}`);
+      return null;
+    }
     const data = (await r.json()) as TreasuryResponse;
-    if (typeof data.currentTreasuryUsd === 'number') return data.currentTreasuryUsd;
-    const last = data.tokensInUsd?.at(-1)?.tokens;
-    if (!last) return null;
-    return Object.values(last).reduce((s, v) => s + (Number(v) || 0), 0);
-  } catch {
+
+    // Preferred: sum current per-chain TVLs (real-time, no staleness).
+    if (data.currentChainTvls && Object.keys(data.currentChainTvls).length > 0) {
+      const total = Object.values(data.currentChainTvls).reduce(
+        (s, v) => s + (Number(v) || 0),
+        0,
+      );
+      if (total > 0) return total;
+    }
+
+    // Fallback: latest snapshot from the historical series.
+    const last = data.tvl?.at(-1)?.totalLiquidityUSD;
+    if (typeof last === 'number' && last > 0) return last;
+
+    return null;
+  } catch (err) {
+    console.warn(`[treasury] ${llamaSlug} fetch failed`, (err as Error).message);
     return null;
   }
 }
