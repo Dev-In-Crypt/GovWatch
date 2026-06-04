@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <radialGradient id="coreGrad" cx="0.4" cy="0.35" r="0.65">
+      <stop offset="0%" stop-color="#818CF8"/>
+      <stop offset="55%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#1A2348"/>
+    </radialGradient>
+    <radialGradient id="bgGrad" cx="0.5" cy="0.0" r="1">
+      <stop offset="0%" stop-color="#1a2348"/>
+      <stop offset="100%" stop-color="#0A0E1A"/>
+    </radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1.4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Dark rounded backdrop -->
+  <rect width="32" height="32" rx="7" fill="url(#bgGrad)"/>
+
+  <!-- Outer cyan ring -->
+  <circle cx="16" cy="16" r="13.5" fill="none" stroke="#22D3EE" stroke-width="1" opacity="0.45"/>
+
+  <!-- Inner indigo ring -->
+  <circle cx="16" cy="16" r="9" fill="none" stroke="#818CF8" stroke-width="1.2" opacity="0.75"/>
+
+  <!-- Core -->
+  <circle cx="16" cy="16" r="4.2" fill="url(#coreGrad)" stroke="#818CF8" stroke-width="0.6" filter="url(#glow)"/>
+
+  <!-- Cyan tick at top of inner ring -->
+  <circle cx="16" cy="7" r="1.5" fill="#22D3EE" filter="url(#glow)"/>
+</svg>
