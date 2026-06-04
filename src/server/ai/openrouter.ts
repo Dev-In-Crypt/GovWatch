@@ -50,7 +50,7 @@ export async function chat(opts: ChatOptions): Promise<ChatResponse | null> {
         'content-type': 'application/json',
         authorization: `Bearer ${key}`,
         // OpenRouter ranking metadata — optional but recommended:
-        'http-referer': process.env.NEXTAUTH_URL ?? 'https://daosentinel.xyz',
+        'http-referer': process.env.NEXTAUTH_URL || 'https://daosentinel.xyz',
         'x-title': 'DAO Sentinel',
       },
       body: JSON.stringify(body),

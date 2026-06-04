@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   title: 'DAO Sentinel — Mission control for on-chain democracy',
   description:
     'DAO Sentinel tracks voter turnout, power concentration, and whale activity across the DAO universe — so governance capture never slips by unseen.',
-  metadataBase: new URL(process.env.NEXTAUTH_URL ?? 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXTAUTH_URL || 'http://localhost:3000'),
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
