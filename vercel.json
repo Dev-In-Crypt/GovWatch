@@ -1,4 +1,3 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "_comment": "Cron schedules moved to GitHub Actions (.github/workflows/cron.yml) — Vercel Hobby plan limits crons to once per day."
+  "$schema": "https://openapi.vercel.sh/vercel.json"
 }
