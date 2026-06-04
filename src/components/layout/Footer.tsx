@@ -2,9 +2,9 @@ import Link from 'next/link';
 import { BrandMark } from './BrandMark';
 
 const COLS = [
-  { h: 'Platform', links: [['Whale detection', '/alerts'], ['Turnout analytics', '/daos'], ['Delegate maps', '/delegates'], ['Treasury watch', '/daos']] },
-  { h: 'Resources', links: [['Docs', '#'], ['Democracy Score', '/daos'], ['API reference', '#'], ['Changelog', '#']] },
-  { h: 'Company', links: [['About', '#'], ['Careers', '#'], ['Blog', '#'], ['Contact', '#']] },
+  { h: 'Platform', links: [['Whale detection', '/alerts'], ['Turnout analytics', '/daos'], ['Delegate maps', '/delegates'], ['Weekly digest', '/digest']] },
+  { h: 'Resources', links: [['Docs', '/docs'], ['Democracy Score', '/daos'], ['API reference', '/api-docs'], ['Roadmap', '/roadmap']] },
+  { h: 'Company', links: [['Pricing', '/pricing'], ['Source code', 'https://github.com/Dev-In-Crypt/GovWatch'], ['Contact', 'mailto:hello@daosentinel.xyz']] },
 ] as const;
 
 export function Footer() {
