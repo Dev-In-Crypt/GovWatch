@@ -36,6 +36,18 @@ const LLAMA_SLUG_MAP: Record<string, string> = {
   makerdao: 'makerdao',
   velodrome: 'velodrome-v2',
   yearn: 'yearn-finance',
+  // Second pass — extend coverage to less-mainstream DAOs that exist on DeFiLlama.
+  stargate: 'stargate-finance',
+  redacted: 'redacted-cartel',
+  radiant: 'radiant-capital',
+  starknet: 'starknet',
+  chainflip: 'chainflip',
+  nftx: 'nftx',
+  truefi: 'truefi',
+  paladin: 'paladin',
+  gearbox: 'gearbox',
+  'aave-dao': 'aave', // duplicate Snapshot space, same protocol
+  'ens-security': 'ens', // ENS Security Council shares ENS treasury
 };
 
 interface TreasuryResponse {

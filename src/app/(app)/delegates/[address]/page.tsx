@@ -8,6 +8,22 @@ import { formatNumber, shortenAddress } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ address: string }>;
+}) {
+  const { address } = await params;
+  const addr = address.toLowerCase();
+  const [d] = await db
+    .select({ ensName: delegates.ensName, address: delegates.address })
+    .from(delegates)
+    .where(eq(delegates.address, addr))
+    .limit(1);
+  const label = d?.ensName ?? (d ? shortenAddress(d.address) : shortenAddress(addr));
+  return { title: `${label} — DAO Sentinel` };
+}
+
 export default async function DelegateProfilePage({
   params,
 }: {

@@ -7,6 +7,11 @@ import { PageHeader } from '@/components/layout/PageHeader';
 
 export const dynamic = 'force-dynamic';
 
+export const metadata = {
+  title: 'Weekly Digest — DAO Sentinel',
+  description: 'Archive of weekly governance briefings.',
+};
+
 export default async function DigestArchivePage() {
   const rows = await db.select().from(digests).orderBy(desc(digests.weekOf)).limit(52);
 

@@ -1,5 +1,6 @@
 'use client';
 import { useEffect } from 'react';
+import { NewsletterForm } from '@/components/NewsletterForm';
 
 const ICONS = {
   whale: (
@@ -156,11 +157,13 @@ export function MetricsBand({
   treasuryUsd,
   whaleAlerts24h,
   chains,
+  votesTracked,
 }: {
   daos: number;
   treasuryUsd: number;
   whaleAlerts24h: number;
   chains: number;
+  votesTracked: number;
 }) {
   return (
     <section className="block container-mc" id="metrics">
@@ -170,12 +173,21 @@ export function MetricsBand({
             <div className="mb-num">{daos}</div>
             <div className="mb-lab">DAOs monitored</div>
           </div>
-          <div className="mb-item">
-            <div className="mb-num">
-              <span className="accent">${(treasuryUsd / 1e9).toFixed(1)}</span>B
+          {treasuryUsd >= 100_000_000 ? (
+            <div className="mb-item">
+              <div className="mb-num">
+                <span className="accent">${(treasuryUsd / 1e9).toFixed(1)}</span>B
+              </div>
+              <div className="mb-lab">Treasury under watch</div>
             </div>
-            <div className="mb-lab">Treasury under watch</div>
-          </div>
+          ) : (
+            <div className="mb-item">
+              <div className="mb-num">
+                <span className="accent">{votesTracked.toLocaleString()}</span>
+              </div>
+              <div className="mb-lab">Votes tracked</div>
+            </div>
+          )}
           <div className="mb-item">
             <div className="mb-num">{whaleAlerts24h}</div>
             <div className="mb-lab">Whale alerts in 24h</div>
@@ -347,6 +359,59 @@ export function PricingSection() {
             </ul>
           </div>
         ))}
+      </div>
+    </section>
+  );
+}
+
+export function NewsletterSection() {
+  return (
+    <section className="block container-mc" id="newsletter">
+      <div
+        className="reveal mx-auto max-w-3xl rounded-2xl p-10 text-center"
+        style={{
+          background:
+            'linear-gradient(165deg, hsl(var(--indigo) / 0.14), hsl(var(--panel) / 0.5))',
+          boxShadow:
+            'inset 0 0 0 1px hsl(var(--indigo) / 0.28), 0 24px 60px -30px rgba(0,0,0,0.6)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background:
+              'radial-gradient(500px 250px at 50% 0%, hsl(var(--cyan) / 0.10), transparent 70%)',
+            pointerEvents: 'none',
+          }}
+        />
+        <div style={{ position: 'relative' }}>
+          <span className="eyebrow" style={{ justifyContent: 'center' }}>
+            The weekly briefing
+          </span>
+          <h2
+            className="mt-3 text-3xl font-semibold md:text-4xl"
+            style={{
+              fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            Get the digest <span className="grad-text">in your inbox</span>.
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-sm text-[hsl(var(--text-dim))]">
+            Every Monday at 08:00 UTC. Top proposals, whale activity, Democracy Score movers,
+            deadlines to watch — distilled by AI in under 600 words.
+          </p>
+          <div className="mt-6">
+            <NewsletterForm />
+          </div>
+          <p className="mt-4 text-xs text-[hsl(var(--text-faint))]">
+            One email a week. Unsubscribe with one click.
+          </p>
+        </div>
       </div>
     </section>
   );

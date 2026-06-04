@@ -10,6 +10,11 @@ import { formatNumber, formatUSD } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
+export const metadata = {
+  title: 'DAO Explorer — DAO Sentinel',
+  description: 'All monitored DAOs ranked by Democracy Score.',
+};
+
 export default async function DaosPage({
   searchParams,
 }: {

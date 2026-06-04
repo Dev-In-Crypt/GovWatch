@@ -10,6 +10,10 @@ import { ApiKeyManager } from './ApiKeyManager';
 
 export const dynamic = 'force-dynamic';
 
+export const metadata = {
+  title: 'Settings — DAO Sentinel',
+};
+
 export default async function SettingsPage() {
   const session = await auth();
   if (!session?.user?.email) redirect('/login');

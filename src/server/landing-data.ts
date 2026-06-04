@@ -57,6 +57,7 @@ export interface LandingData {
     proposalsTracked: number;
     whaleAlerts24h: number;
     networkHealth: number;
+    votesTracked: number;
   };
   monitoredCount: number;
   chains: number;
@@ -66,7 +67,13 @@ const EMPTY_LANDING: LandingData = {
   daos: [],
   aggregateScore: 0,
   scoreTrend: 0,
-  stats: { treasuryUsd: 0, proposalsTracked: 0, whaleAlerts24h: 0, networkHealth: 0 },
+  stats: {
+    treasuryUsd: 0,
+    proposalsTracked: 0,
+    whaleAlerts24h: 0,
+    networkHealth: 0,
+    votesTracked: 0,
+  },
   monitoredCount: TRACKED_DAOS.length,
   chains: new Set(TRACKED_DAOS.map((d) => d.chain)).size,
 };
@@ -80,6 +87,7 @@ async function _loadLandingData(): Promise<LandingData> {
         SELECT
           (SELECT count(*) FROM daos)::int AS daos,
           (SELECT count(*) FROM proposals)::int AS proposals,
+          (SELECT count(*) FROM votes)::int AS votes,
           (SELECT count(*) FROM alerts
              WHERE type = 'whale_vote' AND created_at > now() - interval '24 hours')::int AS whales24,
           (SELECT coalesce(sum(treasury_usd), 0) FROM daos)::numeric AS treasury
@@ -95,6 +103,7 @@ async function _loadLandingData(): Promise<LandingData> {
     const totalsArr = totalsResult as unknown as Array<{
       daos: number;
       proposals: number;
+      votes: number;
       whales24: number;
       treasury: string;
     }>;
@@ -189,6 +198,7 @@ async function _loadLandingData(): Promise<LandingData> {
         proposalsTracked: totals?.proposals ?? 0,
         whaleAlerts24h: totals?.whales24 ?? 0,
         networkHealth: avgScore || 0,
+        votesTracked: totals?.votes ?? 0,
       },
       monitoredCount: totals?.daos ?? TRACKED_DAOS.length,
       chains: new Set(TRACKED_DAOS.map((d) => d.chain)).size,

@@ -9,6 +9,11 @@ import { formatNumber, timeAgo, timeRemaining } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
+export const metadata = {
+  title: 'Proposals — DAO Sentinel',
+  description: 'Every Snapshot proposal with AI plain-English summaries.',
+};
+
 export default async function ProposalsPage({
   searchParams,
 }: {

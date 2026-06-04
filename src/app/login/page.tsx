@@ -7,6 +7,10 @@ import LoginForm from './LoginForm';
 
 export const dynamic = 'force-dynamic';
 
+export const metadata = {
+  title: 'Sign in — DAO Sentinel',
+};
+
 export default async function LoginPage() {
   const session = await auth();
   if (session?.user) redirect('/dashboard');

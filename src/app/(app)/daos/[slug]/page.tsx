@@ -11,6 +11,22 @@ import { formatNumber, formatPct, timeAgo, timeRemaining } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const [d] = await db
+    .select({ name: daos.name })
+    .from(daos)
+    .where(eq(daos.slug, slug))
+    .limit(1);
+  return {
+    title: d ? `${d.name} — DAO Sentinel` : 'DAO — DAO Sentinel',
+  };
+}
+
 const METRIC_LABEL: Record<string, string> = {
   participation: 'Voter participation',
   powerDistribution: 'Power distribution',

@@ -9,6 +9,20 @@ import { Badge } from '@/components/ui/badge';
 
 export const dynamic = 'force-dynamic';
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const [d] = await db
+    .select({ title: digests.title })
+    .from(digests)
+    .where(eq(digests.id, id))
+    .limit(1);
+  return { title: d ? `${d.title} — DAO Sentinel` : 'Digest — DAO Sentinel' };
+}
+
 export default async function DigestPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const [d] = await db.select().from(digests).where(eq(digests.id, id)).limit(1);
@@ -89,7 +103,7 @@ export default async function DigestPage({ params }: { params: Promise<{ id: str
         <p className="mx-auto mt-2 max-w-md text-sm text-[hsl(var(--text-dim))]">
           Every Monday at 08:00 UTC. Top proposals, whale activity, score movers.
         </p>
-        <Link href="/" className="btn-mc btn-mc-primary mt-5 inline-flex">
+        <Link href="/#newsletter" className="btn-mc btn-mc-primary mt-5 inline-flex">
           Subscribe →
         </Link>
       </div>

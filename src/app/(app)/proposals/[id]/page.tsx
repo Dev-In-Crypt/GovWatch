@@ -11,6 +11,24 @@ import { formatNumber, shortenAddress, timeAgo, timeRemaining } from '@/lib/util
 
 export const dynamic = 'force-dynamic';
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const [row] = await db
+    .select({ title: proposals.title, dao: daos.name })
+    .from(proposals)
+    .innerJoin(daos, eq(daos.id, proposals.daoId))
+    .where(eq(proposals.id, id))
+    .limit(1);
+  if (!row) return { title: 'Proposal — DAO Sentinel' };
+  // Keep total under ~70 chars for browser tabs
+  const shortTitle = row.title.length > 50 ? row.title.slice(0, 50) + '…' : row.title;
+  return { title: `${shortTitle} · ${row.dao} — DAO Sentinel` };
+}
+
 const RISK_TONE: Record<string, { color: string; label: string }> = {
   high: { color: 'hsl(var(--rose))', label: 'HIGH RISK' },
   medium: { color: 'hsl(var(--amber))', label: 'MEDIUM RISK' },

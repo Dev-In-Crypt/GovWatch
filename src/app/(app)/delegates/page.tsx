@@ -8,6 +8,11 @@ import { formatNumber, shortenAddress } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
+export const metadata = {
+  title: 'Delegates — DAO Sentinel',
+  description: 'Cross-DAO delegate leaderboard.',
+};
+
 export default async function DelegatesPage() {
   const rows = await db
     .select()

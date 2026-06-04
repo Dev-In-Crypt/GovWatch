@@ -3,6 +3,11 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { CheckoutButton } from '@/components/CheckoutButton';
 
+export const metadata = {
+  title: 'Pricing — DAO Sentinel',
+  description: 'Free for everyone. Premium for active delegates and funds.',
+};
+
 export default function PricingPage() {
   return (
     <>

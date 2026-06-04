@@ -14,6 +14,7 @@ interface HeroProps {
     proposalsTracked: number;
     whaleAlerts24h: number;
     networkHealth: number;
+    votesTracked: number;
   };
   monitoredCount: number;
 }
@@ -164,10 +165,17 @@ export function OrbitalHero({
       </div>
 
       <div className="hero-stats">
-        <div className="hs">
-          <div className="hs-num cyan">${(stats.treasuryUsd / 1e9).toFixed(1)}B</div>
-          <div className="hs-lab">Treasury monitored</div>
-        </div>
+        {stats.treasuryUsd >= 100_000_000 ? (
+          <div className="hs">
+            <div className="hs-num cyan">${(stats.treasuryUsd / 1e9).toFixed(1)}B</div>
+            <div className="hs-lab">Treasury monitored</div>
+          </div>
+        ) : (
+          <div className="hs">
+            <div className="hs-num cyan">{stats.votesTracked.toLocaleString()}</div>
+            <div className="hs-lab">Votes tracked</div>
+          </div>
+        )}
         <div className="hs">
           <div className="hs-num">{stats.proposalsTracked.toLocaleString()}</div>
           <div className="hs-lab">Proposals tracked</div>

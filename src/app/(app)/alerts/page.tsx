@@ -9,6 +9,11 @@ import { timeAgo } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
+export const metadata = {
+  title: 'Alerts — DAO Sentinel',
+  description: 'Live feed of whale votes, last-minute swings, quorum risks.',
+};
+
 const TYPE_LABEL: Record<string, string> = {
   whale_vote: '🐳 Whale vote',
   last_minute_swing: '⚡ Last-minute swing',

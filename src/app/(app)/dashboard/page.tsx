@@ -10,6 +10,10 @@ import { timeAgo, timeRemaining, formatNumber } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
+export const metadata = {
+  title: 'Dashboard — DAO Sentinel',
+};
+
 export default async function DashboardHome() {
   const [trending, recentAlerts, topDaos, counts] = await Promise.all([
     db

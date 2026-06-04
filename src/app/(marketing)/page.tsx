@@ -7,6 +7,7 @@ import {
   MetricsBand,
   SocialProof,
   PricingSection,
+  NewsletterSection,
   FinalCTA,
   RevealOnScroll,
 } from '@/components/orbital/Sections';
@@ -35,9 +36,11 @@ export default async function LandingPage() {
           treasuryUsd={data.stats.treasuryUsd}
           whaleAlerts24h={data.stats.whaleAlerts24h}
           chains={data.chains}
+          votesTracked={data.stats.votesTracked}
         />
         <SocialProof />
         <PricingSection />
+        <NewsletterSection />
         <FinalCTA />
       </main>
       <Footer />
