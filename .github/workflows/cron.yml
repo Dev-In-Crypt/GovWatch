@@ -145,7 +145,7 @@ jobs:
           IFS=',' read -ra JOBS <<< "$ENDPOINTS"
           for job in "${JOBS[@]}"; do
             if [ "$job" = "__delegates_pages__" ]; then
-              walk_pages "rebuild-delegates" "rebuild-delegates" 300 12 || true
+              walk_pages "rebuild-delegates" "rebuild-delegates" 100 30 || true
               continue
             fi
             if [ "$job" = "__votes_pages__" ]; then
