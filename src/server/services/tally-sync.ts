@@ -163,6 +163,10 @@ export async function syncTallyProposals(opts: {
           .onConflictDoUpdate({
             target: [proposals.daoId, proposals.externalId, proposals.source],
             set: {
+              // Update title/body too so the stub-title fallback fix
+              // propagates to rows ingested before the heuristic landed.
+              title,
+              body,
               state,
               scores,
               scoresTotal: String(scoresTotal),
