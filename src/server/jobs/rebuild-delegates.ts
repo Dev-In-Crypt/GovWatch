@@ -1,4 +1,4 @@
-import { rebuildDelegateProfiles, resolveDelegateEns } from '../services/delegate-tracker';
+import { rebuildDelegateProfiles, resolveDelegateEns, resolveDelegateKarma } from '../services/delegate-tracker';
 
 /**
  * Process one chunk of top voters into delegate profiles. The cron workflow
@@ -8,18 +8,20 @@ export async function runRebuildDelegatesJob(opts: { limit?: number; offset?: nu
   const t = Date.now();
   const r = await rebuildDelegateProfiles(opts);
 
-  // Only run ENS resolution on the final chunk to avoid blowing the function
-  // timeout on every page. The endpoint is best-effort; if it fails we just
-  // keep the address as-is.
-  let resolved = 0;
+  // Only run ENS + Karma resolution on the final chunk to avoid blowing the
+  // function timeout on every page. Both endpoints are best-effort; failures
+  // leave the row untouched and we retry next run.
+  let ensResolved = 0;
+  let karmaResolved = 0;
   if (r.done) {
-    resolved = await resolveDelegateEns(100);
+    ensResolved = await resolveDelegateEns(100);
+    karmaResolved = await resolveDelegateKarma(50);
   }
 
   console.log(
-    `[rebuild-delegates] offset=${opts.offset ?? 0} limit=${opts.limit ?? 300} delegates=${r.delegates} activities=${r.activities} done=${r.done} ens=${resolved} (${Date.now() - t}ms)`,
+    `[rebuild-delegates] offset=${opts.offset ?? 0} limit=${opts.limit ?? 300} delegates=${r.delegates} activities=${r.activities} done=${r.done} ens=${ensResolved} karma=${karmaResolved} (${Date.now() - t}ms)`,
   );
-  return { ...r, ensResolved: resolved };
+  return { ...r, ensResolved, karmaResolved };
 }
 
 if (require.main === module) {

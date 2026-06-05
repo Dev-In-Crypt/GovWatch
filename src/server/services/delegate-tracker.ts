@@ -169,4 +169,65 @@ export async function resolveDelegateEns(limit = 100): Promise<number> {
   return resolved;
 }
 
+/**
+ * Pull Karma reputation scores (karmahq.xyz) for delegates that don't have
+ * one yet. Sequential fetches with graceful skip — same pattern as ENS.
+ *
+ * Karma endpoint shape (subject to change):
+ *   GET https://api.karmahq.xyz/api/forum-user/{daoSlug}/delegate/{address}
+ *   → { score, rank, profileUrl, ... } (only `score` is required)
+ *
+ * Because Karma scopes scores per DAO, we pick the delegate's most-active DAO
+ * as the lookup context.
+ */
+export async function resolveDelegateKarma(limit = 50): Promise<number> {
+  // Pick delegates that have no karma yet AND have at least one DAO activity
+  const candidates = await db.execute(sql`
+    SELECT d.id, d.address, da.dao_id, daos.slug AS dao_slug
+    FROM delegates d
+    JOIN delegate_dao_activity da ON da.delegate_id = d.id
+    JOIN daos ON daos.id = da.dao_id
+    WHERE d.karma_score IS NULL
+    ORDER BY da.voting_power::numeric DESC NULLS LAST
+    LIMIT ${limit}
+  `);
+
+  const rows = candidates as unknown as Array<{
+    id: string;
+    address: string;
+    dao_slug: string;
+  }>;
+
+  let resolved = 0;
+  for (const row of rows) {
+    try {
+      const url = `https://api.karmahq.xyz/api/forum-user/${row.dao_slug}/delegate/${row.address.toLowerCase()}`;
+      const r = await fetch(url, {
+        headers: { 'user-agent': 'daosentinel/0.1', accept: 'application/json' },
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!r.ok) continue;
+      const data = (await r.json()) as {
+        score?: number;
+        rank?: number;
+        profileUrl?: string;
+      };
+      if (typeof data?.score !== 'number') continue;
+      await db
+        .update(delegates)
+        .set({
+          karmaScore: data.score.toFixed(2),
+          karmaRank: typeof data.rank === 'number' ? data.rank : null,
+          karmaUrl: data.profileUrl ?? `https://karmahq.xyz/dao/${row.dao_slug}/delegators/${row.address.toLowerCase()}`,
+          karmaUpdatedAt: new Date(),
+        })
+        .where(eq(delegates.id, row.id));
+      resolved++;
+    } catch {
+      // single-delegate failure shouldn't abort the batch
+    }
+  }
+  return resolved;
+}
+
 export { and, desc };

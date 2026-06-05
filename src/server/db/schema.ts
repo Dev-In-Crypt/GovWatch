@@ -67,6 +67,11 @@ export const proposals = pgTable(
     author: text('author').notNull(),
     choices: jsonb('choices').$type<string[]>().notNull(),
 
+    // 1536-dim float vector from text-embedding-3-small. Stored as JSON because
+    // Supabase free tier doesn't have the pgvector extension; cosine similarity
+    // is computed in the app layer (fine for < 10k rows).
+    embedding: jsonb('embedding').$type<number[]>(),
+
     aiSummary: text('ai_summary'),
     aiImpact: text('ai_impact'),
     aiRiskLevel: text('ai_risk_level'), // low | medium | high
@@ -150,6 +155,12 @@ export const delegates = pgTable(
     participationRate: numeric('participation_rate', { precision: 5, scale: 4 }),
     avgResponseTimeHours: numeric('avg_response_time_hours', { precision: 8, scale: 2 }),
     consistencyScore: numeric('consistency_score', { precision: 5, scale: 2 }),
+
+    // Karma reputation (karmahq.xyz) — populated lazily by rebuild-delegates job
+    karmaScore: numeric('karma_score', { precision: 5, scale: 2 }),
+    karmaRank: integer('karma_rank'),
+    karmaUrl: text('karma_url'),
+    karmaUpdatedAt: timestamp('karma_updated_at', { withTimezone: true }),
 
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

@@ -1,8 +1,8 @@
-import { eq, isNull, and } from 'drizzle-orm';
+import { eq, isNull, and, or, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { proposals, daos } from '../db/schema';
 import { SUMMARY_BODY_TRUNCATE } from '@/lib/constants';
-import { chat } from '../ai/openrouter';
+import { chat, embed } from '../ai/openrouter';
 
 export const SUMMARY_SYSTEM_PROMPT = `You are DAO Sentinel AI, a governance analyst that explains DAO proposals to regular people.
 
@@ -46,23 +46,29 @@ export async function generateSummaryForProposal(
   if (row.proposal.aiSummary) return null; // already done
 
   const truncatedBody = (row.proposal.body ?? '').slice(0, SUMMARY_BODY_TRUNCATE);
-  const response = await chat({
-    maxTokens: 600,
-    responseFormat: 'json',
-    messages: [
-      { role: 'system', content: SUMMARY_SYSTEM_PROMPT },
-      {
-        role: 'user',
-        content: `DAO: ${row.dao.name}
+
+  // Generate summary and embedding in parallel — they hit independent endpoints.
+  const embedInput = `${row.proposal.title}\n\n${truncatedBody}`;
+  const [response, embedding] = await Promise.all([
+    chat({
+      maxTokens: 600,
+      responseFormat: 'json',
+      messages: [
+        { role: 'system', content: SUMMARY_SYSTEM_PROMPT },
+        {
+          role: 'user',
+          content: `DAO: ${row.dao.name}
 Title: ${row.proposal.title}
 Choices: ${JSON.stringify(row.proposal.choices)}
 Current votes: ${row.proposal.votesCount ?? 0}
 
 Proposal body:
 ${truncatedBody}`,
-      },
-    ],
-  });
+        },
+      ],
+    }),
+    embed(embedInput),
+  ]);
   if (!response) return null;
 
   const out = parseSummaryJson(response.text);
@@ -75,10 +81,41 @@ ${truncatedBody}`,
       aiImpact: out.impact,
       aiRiskLevel: out.riskLevel,
       summaryGeneratedAt: new Date(),
+      ...(embedding ? { embedding } : {}),
     })
     .where(eq(proposals.id, proposalId));
 
   return out;
+}
+
+/**
+ * Backfill embeddings for proposals that already have a summary but no
+ * embedding (these were summarised before the embedding feature shipped).
+ * Returns the number of proposals successfully embedded.
+ */
+export async function backfillEmbeddings(limit = 50): Promise<number> {
+  const targets = await db
+    .select({
+      id: proposals.id,
+      title: proposals.title,
+      body: proposals.body,
+    })
+    .from(proposals)
+    .where(and(isNull(proposals.embedding)))
+    .limit(limit);
+
+  let done = 0;
+  for (const p of targets) {
+    const text = `${p.title}\n\n${(p.body ?? '').slice(0, SUMMARY_BODY_TRUNCATE)}`;
+    const vec = await embed(text);
+    if (!vec) continue;
+    await db
+      .update(proposals)
+      .set({ embedding: vec })
+      .where(eq(proposals.id, p.id));
+    done++;
+  }
+  return done;
 }
 
 export function parseSummaryJson(text: string): SummaryOutput | null {
@@ -108,16 +145,23 @@ export function parseSummaryJson(text: string): SummaryOutput | null {
   return { summary: String(p.summary), impact: String(p.impact), riskLevel };
 }
 
-export async function generatePendingSummaries(limit = 50): Promise<number> {
+export async function generatePendingSummaries(limit = 50): Promise<{
+  summarised: number;
+  backfilledEmbeddings: number;
+}> {
   const pending = await db
     .select({ id: proposals.id })
     .from(proposals)
     .where(and(isNull(proposals.aiSummary)))
     .limit(limit);
-  let done = 0;
+  let summarised = 0;
   for (const p of pending) {
     const r = await generateSummaryForProposal(p.id);
-    if (r) done++;
+    if (r) summarised++;
   }
-  return done;
+  // After fresh summaries, backfill embeddings for any proposal that still
+  // lacks one (these are typically older rows summarised before embeddings
+  // were wired up). Caps at the same limit to keep job time bounded.
+  const backfilledEmbeddings = await backfillEmbeddings(limit);
+  return { summarised, backfilledEmbeddings };
 }
