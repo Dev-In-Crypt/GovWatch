@@ -4,6 +4,7 @@ import { db } from '@/server/db';
 import { delegates, delegateDaoActivity, daos } from '@/server/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { Badge } from '@/components/ui/badge';
+import { CrossDaoBlocs } from '@/components/delegates/CrossDaoBlocs';
 import { formatNumber, shortenAddress } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
@@ -79,7 +80,7 @@ export default async function DelegateProfilePage({
       </div>
 
       {/* Stat cells */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <div className="stat-cell">
           <div className="lab">DAOs active in</div>
           <div className="val">{delegate.totalDaosActive ?? 0}</div>
@@ -102,6 +103,33 @@ export default async function DelegateProfilePage({
               {participationPct.toFixed(0)}%
             </span>
           </div>
+        </div>
+        <div className="stat-cell">
+          <div className="lab">Karma score</div>
+          <div className="val">
+            {delegate.karmaScore != null ? (
+              <>
+                <span className="accent">{Number(delegate.karmaScore).toFixed(0)}</span>
+                {delegate.karmaRank && (
+                  <span style={{ fontSize: 12, color: 'hsl(var(--text-dim))' }}>
+                    {' '}· rank #{delegate.karmaRank}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="text-[hsl(var(--text-faint))]">—</span>
+            )}
+          </div>
+          {delegate.karmaUrl && (
+            <a
+              href={delegate.karmaUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-block text-xs mono text-[hsl(var(--indigo-bright))] hover:underline"
+            >
+              view on karma.gg ↗
+            </a>
+          )}
         </div>
         <div className="stat-cell">
           <div className="lab">Avg response · hours</div>
@@ -161,6 +189,17 @@ export default async function DelegateProfilePage({
             );
           })}
         </div>
+      </section>
+
+      {/* Cross-DAO co-voters */}
+      <section>
+        <div className="mb-4 flex items-baseline justify-between">
+          <h2 className="app-sec-title">Voting bloc · co-voters</h2>
+          <span className="text-xs mono text-[hsl(var(--text-dim))]">
+            Addresses that voted the same way on the same proposals
+          </span>
+        </div>
+        <CrossDaoBlocs address={delegate.address} />
       </section>
     </div>
   );

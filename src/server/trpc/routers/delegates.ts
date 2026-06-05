@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
 import { router, publicProcedure } from '../trpc';
 import { delegates, delegateDaoActivity, daos } from '../../db/schema';
 
@@ -56,5 +56,105 @@ export const delegatesRouter = router({
         .where(eq(delegateDaoActivity.daoId, dao.id))
         .orderBy(desc(delegateDaoActivity.votingPower))
         .limit(input.limit);
+    }),
+
+  /**
+   * Voters who appear in >= minDaos distinct DAOs. The "cross-DAO bloc"
+   * leaderboard — addresses present in multiple governance forums often act
+   * as coordinated voting blocs, professional delegate firms, or governance
+   * service providers.
+   */
+  overlapAnalysis: publicProcedure
+    .input(
+      z
+        .object({
+          minDaos: z.number().min(2).max(20).default(3),
+          limit: z.number().min(1).max(200).default(100),
+        })
+        .optional()
+        .default({}),
+    )
+    .query(async ({ ctx, input }) => {
+      const rows = await ctx.db.execute(sql`
+        WITH voter_summary AS (
+          SELECT
+            v.voter_address,
+            count(DISTINCT v.dao_id)::int AS dao_count,
+            count(*)::int AS total_votes,
+            array_agg(DISTINCT d.slug) AS dao_slugs
+          FROM votes v
+          JOIN daos d ON d.id = v.dao_id
+          GROUP BY v.voter_address
+          HAVING count(DISTINCT v.dao_id) >= ${input.minDaos}
+        )
+        SELECT
+          vs.voter_address AS address,
+          vs.dao_count,
+          vs.total_votes,
+          vs.dao_slugs,
+          del.ens_name,
+          del.karma_score::numeric AS karma_score
+        FROM voter_summary vs
+        LEFT JOIN delegates del ON del.address = vs.voter_address
+        ORDER BY vs.dao_count DESC, vs.total_votes DESC
+        LIMIT ${input.limit}
+      `);
+      return rows as unknown as Array<{
+        address: string;
+        dao_count: number;
+        total_votes: number;
+        dao_slugs: string[];
+        ens_name: string | null;
+        karma_score: string | null;
+      }>;
+    }),
+
+  /**
+   * Top co-voters: addresses that voted on the same proposal with the same
+   * choice as the target address, sorted by overlap count.
+   */
+  blocFor: publicProcedure
+    .input(
+      z.object({
+        address: z.string(),
+        limit: z.number().min(1).max(50).default(15),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const addr = input.address.toLowerCase();
+      const rows = await ctx.db.execute(sql`
+        WITH target_votes AS (
+          SELECT proposal_id, choice
+          FROM votes
+          WHERE voter_address = ${addr}
+        ),
+        co_voters AS (
+          SELECT
+            v.voter_address,
+            count(*)::int AS co_votes
+          FROM votes v
+          JOIN target_votes t
+            ON t.proposal_id = v.proposal_id AND t.choice = v.choice
+          WHERE v.voter_address <> ${addr}
+          GROUP BY v.voter_address
+        )
+        SELECT
+          c.voter_address AS address,
+          c.co_votes,
+          (SELECT count(*) FROM target_votes)::int AS target_total,
+          del.ens_name,
+          del.karma_score::numeric AS karma_score
+        FROM co_voters c
+        LEFT JOIN delegates del ON del.address = c.voter_address
+        ORDER BY c.co_votes DESC
+        LIMIT ${input.limit}
+      `);
+      return rows as unknown as Array<{
+        address: string;
+        co_votes: number;
+        target_total: number;
+        ens_name: string | null;
+        karma_score: string | null;
+      }>;
     }),
 });

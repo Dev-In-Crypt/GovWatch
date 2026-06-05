@@ -29,6 +29,27 @@ export default async function DelegatesPage() {
         description="Cross-DAO activity, participation, and consistency for the most active delegates."
       />
 
+      <div
+        className="flex flex-wrap items-center justify-between gap-3 rounded-xl px-5 py-4"
+        style={{
+          background: 'hsl(var(--indigo) / 0.10)',
+          boxShadow: 'inset 0 0 0 1px hsl(var(--indigo) / 0.28)',
+        }}
+      >
+        <div className="text-sm">
+          <span className="mono uppercase tracking-wider text-[hsl(var(--indigo-bright))]">
+            New
+          </span>{' '}
+          · Cross-DAO voting blocs — see which addresses vote in multiple DAOs.
+        </div>
+        <Link
+          href="/delegates/blocs"
+          className="text-sm text-[hsl(var(--indigo-bright))] hover:underline mono"
+        >
+          View overlap analysis →
+        </Link>
+      </div>
+
       <div className="glass-card divide-y divide-[hsl(var(--line))] p-0">
         {rows.length === 0 && (
           <div className="p-12 text-center text-sm text-[hsl(var(--text-dim))]">
