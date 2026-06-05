@@ -8,6 +8,7 @@ import { ScoreGauge } from '@/components/charts/ScoreGauge';
 import { ScoreTrend } from '@/components/charts/ScoreTrend';
 import { RiskBadge } from '@/components/proposals/RiskBadge';
 import { ProgressBar } from '@/components/ui/progress';
+import { CompareWithPicker } from '@/components/daos/CompareWithPicker';
 import { formatNumber, formatPct, timeAgo, timeRemaining } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
@@ -41,7 +42,7 @@ export default async function DaoProfilePage({ params }: { params: Promise<{ slu
   const [dao] = await db.select().from(daos).where(eq(daos.slug, slug)).limit(1);
   if (!dao) notFound();
 
-  const [active, recent, recentAlerts, history] = await Promise.all([
+  const [active, recent, recentAlerts, history, allDaos] = await Promise.all([
     db
       .select()
       .from(proposals)
@@ -66,6 +67,7 @@ export default async function DaoProfilePage({ params }: { params: Promise<{ slu
       .where(eq(scoreHistory.daoId, dao.id))
       .orderBy(asc(scoreHistory.computedAt))
       .limit(90),
+    db.select({ slug: daos.slug, name: daos.name }).from(daos).orderBy(asc(daos.name)),
   ]);
 
   const breakdown = (dao.scoreBreakdown ?? {}) as Record<string, number>;
@@ -115,6 +117,9 @@ export default async function DaoProfilePage({ params }: { params: Promise<{ slu
               {dao.website} ↗
             </a>
           )}
+          <div className="mt-4">
+            <CompareWithPicker currentSlug={dao.slug} options={allDaos} />
+          </div>
         </div>
       </div>
 
