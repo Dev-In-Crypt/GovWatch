@@ -1,0 +1,1 @@
+ALTER TABLE "alerts" ADD COLUMN "published_to_email" boolean DEFAULT false;

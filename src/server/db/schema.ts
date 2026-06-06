@@ -215,6 +215,7 @@ export const alerts = pgTable(
 
     publishedToX: boolean('published_to_x').default(false),
     publishedToTelegram: boolean('published_to_telegram').default(false),
+    publishedToEmail: boolean('published_to_email').default(false),
 
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
