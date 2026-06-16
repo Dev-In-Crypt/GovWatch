@@ -181,13 +181,22 @@ export default async function ComparePage({
       {/* Hero — two gauges side by side */}
       <div className="grid grid-cols-2 gap-6">
         {[a, b].map(({ dao }, i) => (
-          <div key={dao.id} className={`flex items-center gap-5 glass-card py-6 ${i === 1 ? 'flex-row-reverse text-right' : ''}`}>
+          <div
+            className={`flex flex-col items-center gap-3 glass-card py-6 text-center sm:flex-row sm:gap-5 sm:text-left ${
+              i === 1 ? 'sm:flex-row-reverse sm:text-right' : ''
+            }`}
+            key={dao.id}
+          >
             <ScoreGauge score={Number(dao.democracyScore ?? 0)} size="lg" />
             <div>
-              <Link href={`/daos/${dao.slug}`} className="text-2xl font-bold hover:underline" style={{ fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif' }}>
+              <Link href={`/daos/${dao.slug}`} className="text-xl font-bold hover:underline sm:text-2xl" style={{ fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif' }}>
                 {dao.name}
               </Link>
-              <div className={`mt-2 flex flex-wrap items-center gap-2 ${i === 1 ? 'justify-end' : ''}`}>
+              <div
+                className={`mt-2 flex flex-wrap items-center justify-center gap-2 ${
+                  i === 1 ? 'sm:justify-end' : 'sm:justify-start'
+                }`}
+              >
                 <Badge variant="outline">{dao.chain}</Badge>
                 {dao.governanceToken && <Badge variant="secondary">{dao.governanceToken}</Badge>}
               </div>
