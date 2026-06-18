@@ -65,12 +65,12 @@ export default function TermsPage() {
             <li>Do not resell or redistribute the data feed without a written agreement.</li>
           </ul>
 
-          <h2>5. Paid plans</h2>
+          <h2>5. A free public good</h2>
           <p>
-            Paid subscriptions are billed in advance through Stripe on a recurring basis until
-            cancelled. You can cancel anytime; access continues until the end of the current billing
-            period. Except where required by law, fees already paid are non-refundable. We may
-            change pricing with prior notice for future billing periods.
+            DAO Sentinel is provided free of charge as public-goods infrastructure. There are no
+            paid plans, subscriptions, or fees, and we do not sell your data. The service is funded
+            by ecosystem and public-goods grants. We may introduce optional supporter tiers in the
+            future, but the core watchdog product will remain free for everyone.
           </p>
 
           <h2>6. Intellectual property</h2>
@@ -93,8 +93,8 @@ export default function TermsPage() {
             To the maximum extent permitted by law, we disclaim all warranties, express or implied.
             We are not liable for any indirect, incidental, or consequential damages, or for losses
             arising from your reliance on the Service, governance decisions, or trading activity.
-            Our total liability for any claim is limited to the amount you paid us in the 12 months
-            before the claim.
+            Because the Service is provided free of charge, our aggregate liability for any claim is
+            limited to the maximum extent permitted by law.
           </p>
 
           <h2>9. Termination</h2>

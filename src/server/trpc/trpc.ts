@@ -29,14 +29,3 @@ const isAuthed = middleware(async ({ ctx, next }) => {
 });
 
 export const protectedProcedure = t.procedure.use(isAuthed);
-
-const isPremium = middleware(async ({ ctx, next }) => {
-  if (!ctx.session?.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
-  const plan = (ctx.session.user as { plan?: string }).plan ?? 'free';
-  if (plan === 'free') {
-    throw new TRPCError({ code: 'FORBIDDEN', message: 'Premium plan required' });
-  }
-  return next({ ctx: { ...ctx, user: ctx.session.user } });
-});
-
-export const premiumProcedure = t.procedure.use(isPremium);

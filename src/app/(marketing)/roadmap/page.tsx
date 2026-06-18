@@ -92,8 +92,8 @@ const PHASES: Phase[] = [
       },
       {
         status: 'live',
-        title: 'Premium API v1',
-        body: 'REST endpoints for /proposals, /daos, /alerts with bearer auth, per-month quotas, burst limits.',
+        title: 'Open API v1',
+        body: 'Free REST endpoints for /proposals, /daos, /alerts with bearer auth, generous fair-use quotas, burst limits.',
       },
       {
         status: 'building',
@@ -103,7 +103,7 @@ const PHASES: Phase[] = [
       {
         status: 'next',
         title: 'Telegram bot for whale alerts',
-        body: 'Per-DAO subscriptions, watchlist push, rich formatting. Pipeline already supports it — just need the bot token.',
+        body: 'Per-DAO channels, watchlist push, rich formatting. Pipeline already supports it — just need the bot token.',
       },
       {
         status: 'next',
@@ -114,18 +114,18 @@ const PHASES: Phase[] = [
   },
   {
     q: 'Phase 03',
-    title: 'Monetization',
+    title: 'Sustainability',
     highlight: '· Q3 2026',
     items: [
       {
         status: 'next',
-        title: 'Stripe subscriptions',
-        body: 'Delegate Pro $99/mo (1K API calls + real-time alerts + watchlists). Fund Suite $399/mo (10K API calls + portfolio dashboard).',
+        title: 'Public-goods grant funding',
+        body: 'Funded by the ecosystem, free for the ecosystem: Arbitrum LTIPP, Optimism RetroPGF, ENS Public Goods, Gitcoin. No subscriptions, no paywalls — ever.',
       },
       {
         status: 'next',
         title: 'DAO treasury watchlists',
-        body: 'Premium feature: monitor every DAO where you hold tokens, get cross-portfolio governance digest.',
+        body: 'Monitor every DAO where you hold tokens and get a cross-portfolio governance digest — free for all users.',
       },
       {
         status: 'next',
@@ -133,9 +133,9 @@ const PHASES: Phase[] = [
         body: '"If I delegate 100k tokens to address X, how often would my position swing the vote?" — historical replay against the last 12 months.',
       },
       {
-        status: 'next',
-        title: 'Public-good grant applications',
-        body: 'Arbitrum LTIPP, Optimism RetroPGF, ENS Public Goods, Gitcoin. Target: $50–150K Year-1 funding.',
+        status: 'idea',
+        title: 'Self-host & open data exports',
+        body: 'Docs to run your own instance, plus bulk dataset snapshots so researchers can work offline. Public infrastructure should be forkable.',
       },
     ],
   },
@@ -145,9 +145,9 @@ const PHASES: Phase[] = [
     highlight: '· Q4 2026',
     items: [
       {
-        status: 'next',
+        status: 'live',
         title: 'On-chain governance (Tally)',
-        body: 'Tally Governor contracts on Ethereum + L2s. Currently Snapshot-only. ~20% more DAOs unlock once on-chain ingest is live.',
+        body: 'Tally Governor proposals for Compound, Uniswap, ENS, Arbitrum, Optimism & Aave now ingest alongside Snapshot — on-chain DAOs are covered.',
       },
       {
         status: 'idea',

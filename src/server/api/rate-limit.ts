@@ -24,10 +24,13 @@ export function checkRateLimit(
   return { ok: true, remaining: bucket.tokens, resetAt: bucket.resetAt };
 }
 
+// Public good: every signed-in user gets a generous free monthly quota.
+// The legacy paid tiers are kept only so old rows with those plan values
+// still resolve to a (higher) limit; no new plan is ever assigned.
 export const PLAN_MONTHLY_QUOTA = {
-  free: 0,
-  delegate_pro: 1_000,
-  fund_suite: 10_000,
+  free: 5_000,
+  delegate_pro: 10_000,
+  fund_suite: 50_000,
 } as const;
 
 export const BURST_LIMIT = { rps: 5, windowMs: 1_000 } as const;

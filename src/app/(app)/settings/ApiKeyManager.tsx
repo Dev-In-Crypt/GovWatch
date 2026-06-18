@@ -5,20 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { Copy } from 'lucide-react';
 import { trpc } from '@/lib/trpc-client';
 
-export function ApiKeyManager({ initialKey, plan }: { initialKey: string | null; plan: string }) {
+export function ApiKeyManager({ initialKey }: { initialKey: string | null }) {
   const [key, setKey] = useState(initialKey);
   const rotate = trpc.user.rotateApiKey.useMutation({
     onSuccess: (d) => setKey(d.apiKey),
   });
   const revoke = trpc.user.revokeApiKey.useMutation({ onSuccess: () => setKey(null) });
-
-  if (plan === 'free') {
-    return (
-      <p className="text-sm text-muted-foreground">
-        API access is included with Delegate Pro ($99/mo) and Fund Suite ($399/mo).
-      </p>
-    );
-  }
 
   return (
     <div className="space-y-3">
@@ -48,7 +40,8 @@ export function ApiKeyManager({ initialKey, plan }: { initialKey: string | null;
         )}
       </div>
       <p className="text-xs text-muted-foreground">
-        Send as <code>Authorization: Bearer &lt;key&gt;</code> to{' '}
+        Free for everyone — 5,000 calls/month. Send as{' '}
+        <code>Authorization: Bearer &lt;key&gt;</code> to{' '}
         <code>https://daosentinel.xyz/api/v1/proposals</code> etc. Rotating invalidates the old key
         immediately.
       </p>

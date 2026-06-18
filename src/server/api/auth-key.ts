@@ -35,16 +35,7 @@ export async function authenticateApiKey(req: Request): Promise<
   }
 
   const plan = (user.plan as keyof typeof PLAN_MONTHLY_QUOTA) ?? 'free';
-  const quota = PLAN_MONTHLY_QUOTA[plan] ?? 0;
-  if (quota === 0) {
-    return {
-      ok: false,
-      response: NextResponse.json(
-        { error: 'plan_required', plan, hint: 'Upgrade to delegate_pro or fund_suite' },
-        { status: 402 },
-      ),
-    };
-  }
+  const quota = PLAN_MONTHLY_QUOTA[plan] ?? PLAN_MONTHLY_QUOTA.free;
 
   const used = user.apiCallsThisMonth ?? 0;
   if (used >= quota) {

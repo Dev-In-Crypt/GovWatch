@@ -34,17 +34,18 @@ export default async function SettingsPage() {
       />
 
       <section>
-        <h2 className="app-sec-title">Subscription</h2>
+        <h2 className="app-sec-title">Plan</h2>
         <div className="glass-card">
           <div className="flex items-center gap-2">
-            <span className="text-sm">Plan</span>
-            <Badge variant={user.plan === 'free' ? 'secondary' : 'success'}>{user.plan}</Badge>
+            <Badge variant="success">Public good</Badge>
+            <span className="text-sm text-[hsl(var(--text-dim))]">
+              Every feature is free — no tiers, no paywalls.
+            </span>
           </div>
-          {user.plan !== 'free' && (
-            <p className="mt-2 text-sm text-[hsl(var(--text-dim))]">
-              API quota used this month: <span className="mono">{user.apiCallsThisMonth ?? 0}</span>
-            </p>
-          )}
+          <p className="mt-2 text-sm text-[hsl(var(--text-dim))]">
+            API calls this month: <span className="mono">{user.apiCallsThisMonth ?? 0}</span>{' '}
+            <span className="text-[hsl(var(--text-faint))]">/ 5,000</span>
+          </p>
         </div>
       </section>
 
@@ -62,9 +63,9 @@ export default async function SettingsPage() {
         <h2 className="app-sec-title">API key</h2>
         <div className="glass-card">
           <p className="mb-4 text-sm text-[hsl(var(--text-dim))]">
-            Premium: programmatic access to the DAO Sentinel dataset.
+            Free programmatic access to the DAO Sentinel dataset.
           </p>
-          <ApiKeyManager initialKey={user.apiKey ?? null} plan={user.plan} />
+          <ApiKeyManager initialKey={user.apiKey ?? null} />
         </div>
       </section>
 

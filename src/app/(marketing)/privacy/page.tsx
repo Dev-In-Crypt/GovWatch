@@ -46,11 +46,6 @@ export default function PrivacyPage() {
               channel settings (email / Telegram).
             </li>
             <li>
-              <strong>Billing data.</strong> If you subscribe to a paid plan, payment is processed
-              by Stripe. We store only a Stripe customer/subscription identifier and your plan tier
-              — never your full card details.
-            </li>
-            <li>
               <strong>Usage analytics.</strong> We use privacy-friendly, cookieless analytics
               (Vercel Analytics) to count page views and performance. No personal profiles are
               built and no advertising trackers are used.
@@ -83,9 +78,6 @@ export default function PrivacyPage() {
             </li>
             <li>
               <strong>Resend</strong> — transactional email (login links, alerts, digest).
-            </li>
-            <li>
-              <strong>Stripe</strong> — payment processing (paid plans only).
             </li>
             <li>
               <strong>OpenRouter</strong> — AI summaries of public proposals (no personal data

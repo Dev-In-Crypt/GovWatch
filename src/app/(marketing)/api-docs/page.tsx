@@ -4,7 +4,7 @@ import { Footer } from '@/components/layout/Footer';
 
 export const metadata = {
   title: 'API reference — DAO Sentinel',
-  description: 'Premium REST API for DAO governance data. Bearer auth, rate-limited, JSON.',
+  description: 'Free REST API for DAO governance data. Bearer auth, rate-limited, JSON.',
 };
 
 function Code({ children }: { children: React.ReactNode }) {
@@ -84,7 +84,8 @@ export default function ApiDocsPage() {
             API <span className="grad-text">reference</span>
           </h1>
           <p className="mt-4 text-base text-[hsl(var(--text-dim))]">
-            REST endpoints for DAO governance data. Bearer auth, rate-limited per plan.
+            REST endpoints for DAO governance data. Bearer auth, free for everyone, fair-use
+            rate-limited.
           </p>
         </div>
 
@@ -93,12 +94,11 @@ export default function ApiDocsPage() {
           <h2 className="app-sec-title">Authentication</h2>
           <div className="glass-card space-y-3">
             <p className="text-sm text-[hsl(var(--text-dim))]">
-              Generate an API key in{' '}
+              Generate a free API key in{' '}
               <Link href="/settings" className="text-[hsl(var(--indigo-bright))] hover:underline">
                 Settings
               </Link>{' '}
-              (Delegate Pro or Fund Suite plan required). Pass it as a bearer token in every
-              request:
+              — available to every signed-in user. Pass it as a bearer token in every request:
             </p>
             <Code>{`Authorization: Bearer gw_xxxxxxxxxxxxxxxxxxxxxxxx`}</Code>
             <p className="text-xs text-[hsl(var(--text-dim))]">
@@ -111,23 +111,18 @@ export default function ApiDocsPage() {
         {/* Rate limits */}
         <section className="mb-12">
           <h2 className="app-sec-title">Rate limits</h2>
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-2">
             <div className="stat-cell">
-              <div className="lab">Free plan</div>
-              <div className="val">0<span style={{ fontSize: 14, color: 'hsl(var(--text-dim))' }}> /mo</span></div>
+              <div className="lab">Monthly quota</div>
+              <div className="val"><span className="accent">5,000</span><span style={{ fontSize: 14, color: 'hsl(var(--text-dim))' }}> /mo</span></div>
               <p className="mt-2 text-xs text-[hsl(var(--text-dim))]">
-                API access requires premium.
+                Free for every signed-in user. Need more for a public-goods project? Reach out.
               </p>
             </div>
             <div className="stat-cell">
-              <div className="lab">Delegate Pro</div>
-              <div className="val"><span className="accent">1,000</span><span style={{ fontSize: 14, color: 'hsl(var(--text-dim))' }}> /mo</span></div>
-              <p className="mt-2 text-xs text-[hsl(var(--text-dim))]">$99/month.</p>
-            </div>
-            <div className="stat-cell">
-              <div className="lab">Fund Suite</div>
-              <div className="val"><span className="accent">10,000</span><span style={{ fontSize: 14, color: 'hsl(var(--text-dim))' }}> /mo</span></div>
-              <p className="mt-2 text-xs text-[hsl(var(--text-dim))]">$399/month.</p>
+              <div className="lab">Burst limit</div>
+              <div className="val"><span className="accent">5</span><span style={{ fontSize: 14, color: 'hsl(var(--text-dim))' }}> req/sec</span></div>
+              <p className="mt-2 text-xs text-[hsl(var(--text-dim))]">Per key, to keep the service healthy for all.</p>
             </div>
           </div>
           <p className="mt-4 text-xs text-[hsl(var(--text-dim))]">
@@ -280,11 +275,11 @@ es.addEventListener('alert', (e) =>
             Ready to build?
           </h2>
           <p className="mx-auto mt-3 max-w-md text-sm text-[hsl(var(--text-dim))]">
-            Sign up, upgrade to Delegate Pro, generate your key from Settings, ship.
+            Sign in, generate your free key from Settings, ship. No plan, no card.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link href="/pricing" className="btn-mc btn-mc-primary">
-              See plans →
+            <Link href="/settings" className="btn-mc btn-mc-primary">
+              Get your API key →
             </Link>
             <Link href="/docs" className="btn-mc btn-mc-ghost">
               Read the docs
