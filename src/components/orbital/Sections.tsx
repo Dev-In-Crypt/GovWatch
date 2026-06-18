@@ -71,7 +71,7 @@ const FEATURES: Array<{ k: keyof typeof ICONS; t: string; d: string; tag: string
   {
     k: 'treasury',
     t: 'Treasury watch',
-    d: 'Follow the money: spend authorizations, multisig changes, and runway across $11.9B in DAO treasuries.',
+    d: 'Follow the money: treasury value and runway across every monitored DAO, refreshed daily from DeFiLlama.',
     tag: 'Multi-chain',
   },
   {

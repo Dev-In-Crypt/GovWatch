@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import type { WhaleCardData } from '@/server/landing-data';
 
 interface WhaleCard {
   key: number;
@@ -12,15 +13,6 @@ interface WhaleCard {
   leaving?: boolean;
 }
 
-// Seed cards used until live SSE data starts flowing.
-const SEED: Omit<WhaleCard, 'key' | 'born' | 'leaving'>[] = [
-  { wallet: '0x7a3f…b2c1', votes: '1.84M', dao: 'Uniswap', prop: 'UNI · Fee switch pilot', pct: 19 },
-  { wallet: 'a16z.eth', votes: '4.20M', dao: 'Optimism', prop: 'OP · Grant Council renewal', pct: 31 },
-  { wallet: '0x9c1d…0e44', votes: '910K', dao: 'Lido', prop: 'LDO · Dual governance v2', pct: 27 },
-  { wallet: 'whale.eth', votes: '2.05M', dao: 'Arbitrum', prop: 'ARB · Stylus incentive budget', pct: 14 },
-  { wallet: '0x3b8e…ff20', votes: '760K', dao: 'ENS', prop: 'ENS · Namechain migration', pct: 22 },
-];
-
 function shorten(addr: string): string {
   if (!addr || addr.includes('…')) return addr;
   if (addr.includes('.')) return addr;
@@ -32,28 +24,19 @@ function ago(born: number): string {
   return s < 1 ? 'now' : `${s}s ago`;
 }
 
-export function WhaleFeed() {
-  const [cards, setCards] = useState<WhaleCard[]>([]);
-  const idx = useRef(0);
+export function WhaleFeed({ initial = [] }: { initial?: WhaleCardData[] }) {
   const uid = useRef(0);
-  const seenLive = useRef(false);
-
-  // Seed loop — keeps the feed alive even when no real alerts arrive yet.
-  useEffect(() => {
-    const spawn = () => {
-      if (seenLive.current) return; // stop seeding once real alerts come in
-      const base = SEED[idx.current % SEED.length];
-      idx.current += 1;
-      pushCard({ ...base });
-    };
-    spawn();
-    const t1 = setTimeout(spawn, 1400);
-    const iv = setInterval(spawn, 4200);
-    return () => {
-      clearInterval(iv);
-      clearTimeout(t1);
-    };
-  }, []);
+  const [cards, setCards] = useState<WhaleCard[]>(() =>
+    initial.slice(0, 3).map((w) => ({
+      key: uid.current++,
+      wallet: shorten(w.voter),
+      votes: w.vp ? formatVp(w.vp) : '—',
+      dao: w.dao,
+      prop: w.prop,
+      pct: Math.round(w.vpPct),
+      born: new Date(w.createdAt).getTime(),
+    })),
+  );
 
   // Live SSE — promote real whale_vote alerts into the feed.
   useEffect(() => {
@@ -68,7 +51,6 @@ export function WhaleFeed() {
             daoName?: string;
           };
           if (a.type !== 'whale_vote' || !a.data) return;
-          seenLive.current = true;
           pushCard({
             wallet: shorten(a.data.voter ?? ''),
             votes: a.data.vp ? formatVp(a.data.vp) : '—',
@@ -115,9 +97,15 @@ export function WhaleFeed() {
       <div className="whale-feed-head">
         <span className="dot" /> Whale Watch · Live
       </div>
-      {cards.map((c) => (
-        <WhaleCardView key={c.key} card={c} />
-      ))}
+      {cards.length === 0 ? (
+        <div className="whale-card" style={{ opacity: 0.75 }}>
+          <div className="wc-body" style={{ fontSize: 13 }}>
+            Monitoring for whale votes — none in the recent window.
+          </div>
+        </div>
+      ) : (
+        cards.map((c) => <WhaleCardView key={c.key} card={c} />)
+      )}
     </div>
   );
 }

@@ -48,6 +48,15 @@ function formatTreasury(usd: number | null | string): string {
   return `$${(v / 1e3).toFixed(0)}K`;
 }
 
+export interface WhaleCardData {
+  voter: string;
+  vp: number;
+  vpPct: number;
+  dao: string;
+  prop: string;
+  createdAt: string;
+}
+
 export interface LandingData {
   daos: OrbitalDao[];
   aggregateScore: number;
@@ -59,6 +68,7 @@ export interface LandingData {
     networkHealth: number;
     votesTracked: number;
   };
+  recentWhales: WhaleCardData[];
   monitoredCount: number;
   chains: number;
 }
@@ -74,14 +84,15 @@ const EMPTY_LANDING: LandingData = {
     networkHealth: 0,
     votesTracked: 0,
   },
+  recentWhales: [],
   monitoredCount: TRACKED_DAOS.length,
   chains: new Set(TRACKED_DAOS.map((d) => d.chain)).size,
 };
 
 async function _loadLandingData(): Promise<LandingData> {
   try {
-    // Fan out the 3 independent queries in parallel.
-    const [allDaos, totalsResult, trendResult] = await Promise.all([
+    // Fan out the independent queries in parallel.
+    const [allDaos, totalsResult, trendResult, whaleRows] = await Promise.all([
       db.select().from(daos).orderBy(desc(daos.democracyScore)).limit(12),
       db.execute(sql`
         SELECT
@@ -96,7 +107,30 @@ async function _loadLandingData(): Promise<LandingData> {
         SELECT avg(score::numeric) AS prev FROM score_history
         WHERE computed_at <= now() - interval '30 days'
       `),
+      // Most recent real whale votes — seeds the hero "Whale Watch" feed with
+      // genuine activity instead of fabricated cards.
+      db
+        .select({ data: alerts.data, daoName: daos.name, createdAt: alerts.createdAt })
+        .from(alerts)
+        .innerJoin(daos, eq(daos.id, alerts.daoId))
+        .where(eq(alerts.type, 'whale_vote'))
+        .orderBy(desc(alerts.createdAt))
+        .limit(6),
     ]);
+
+    const recentWhales: WhaleCardData[] = whaleRows
+      .map((r) => {
+        const d = (r.data ?? {}) as Record<string, unknown>;
+        return {
+          voter: typeof d.voter === 'string' ? d.voter : '',
+          vp: typeof d.vp === 'number' ? d.vp : 0,
+          vpPct: typeof d.vpPct === 'number' ? d.vpPct : 0,
+          dao: r.daoName,
+          prop: typeof d.proposalTitle === 'string' ? d.proposalTitle : '',
+          createdAt: (r.createdAt instanceof Date ? r.createdAt : new Date()).toISOString(),
+        };
+      })
+      .filter((w) => w.voter);
 
     if (allDaos.length === 0) return EMPTY_LANDING;
 
@@ -200,6 +234,7 @@ async function _loadLandingData(): Promise<LandingData> {
         networkHealth: avgScore || 0,
         votesTracked: totals?.votes ?? 0,
       },
+      recentWhales,
       monitoredCount: totals?.daos ?? TRACKED_DAOS.length,
       chains: new Set(TRACKED_DAOS.map((d) => d.chain)).size,
     };

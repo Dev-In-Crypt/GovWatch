@@ -26,6 +26,7 @@ export default async function LandingPage() {
         aggregateScore={data.aggregateScore}
         scoreTrend={data.scoreTrend}
         stats={data.stats}
+        recentWhales={data.recentWhales}
         monitoredCount={data.monitoredCount}
       />
       <main>

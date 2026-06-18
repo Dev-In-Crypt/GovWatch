@@ -46,7 +46,7 @@ const PHASES: Phase[] = [
       {
         status: 'shipped',
         title: 'Snapshot data pipeline',
-        body: 'Proposals and votes for the top 50 DAOs ingested every 5 minutes via Snapshot GraphQL hub. 3,000+ votes already in the index.',
+        body: 'Proposals and votes for the top 50 DAOs ingested every 5 minutes via Snapshot GraphQL hub, with full vote history indexed per proposal.',
       },
       {
         status: 'shipped',
@@ -66,7 +66,7 @@ const PHASES: Phase[] = [
       {
         status: 'shipped',
         title: 'Cross-DAO delegate tracker',
-        body: '1,400+ delegate profiles with cross-DAO participation, ENS resolution, and response time metrics.',
+        body: 'Cross-DAO delegate profiles with participation, ENS resolution, Karma reputation, and response-time metrics.',
       },
       {
         status: 'shipped',

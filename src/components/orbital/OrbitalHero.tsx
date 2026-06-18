@@ -4,6 +4,7 @@ import { WhaleFeed } from './WhaleFeed';
 import { GovPanel } from './GovPanel';
 import { OrbitalCore } from './OrbitalCore';
 import { Planet, type OrbitalDao } from './Planet';
+import type { WhaleCardData } from '@/server/landing-data';
 
 interface HeroProps {
   daos: OrbitalDao[];
@@ -16,6 +17,7 @@ interface HeroProps {
     networkHealth: number;
     votesTracked: number;
   };
+  recentWhales: WhaleCardData[];
   monitoredCount: number;
 }
 
@@ -36,6 +38,7 @@ export function OrbitalHero({
   aggregateScore,
   scoreTrend,
   stats,
+  recentWhales,
   monitoredCount,
 }: HeroProps) {
   const [selected, setSelected] = useState<OrbitalDao | null>(null);
@@ -69,7 +72,7 @@ export function OrbitalHero({
 
   return (
     <header className="hero">
-      <WhaleFeed />
+      <WhaleFeed initial={recentWhales} />
 
       <div className="hero-intro">
         <span className="pill">
