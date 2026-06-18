@@ -75,7 +75,7 @@ export function Planet({
                 <span>{dao.turnout.toFixed(1)}%</span>
               </div>
               <div className="pt-row">
-                <span>Proposals · 30d</span>
+                <span>Proposals · total</span>
                 <span>{dao.proposals30}</span>
               </div>
               <div

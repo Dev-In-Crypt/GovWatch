@@ -28,10 +28,15 @@ export function avg(xs: number[]): number {
   return xs.reduce((s, v) => s + v, 0) / xs.length;
 }
 
-export async function computeScoreForDao(daoId: string): Promise<{
+export interface ScoreResult {
   score: number;
   breakdown: ScoreBreakdown;
-} | null> {
+  totalProposals: number;
+  totalVoters: number;
+  avgParticipationRate: number; // 0–1
+}
+
+export async function computeScoreForDao(daoId: string): Promise<ScoreResult | null> {
   const [dao] = await db.select().from(daos).where(eq(daos.id, daoId)).limit(1);
   if (!dao) return null;
 
@@ -42,14 +47,31 @@ export async function computeScoreForDao(daoId: string): Promise<{
     .orderBy(desc(proposals.createdAt))
     .limit(20);
 
-  // 1. Participation: ratio of voters to known holders.
-  // We approximate "holders" using dao.totalVoters (highest distinct voter count seen).
-  const participationRates = recentProps.map((p) => {
-    const holders = Math.max(dao.totalVoters ?? 0, 1);
-    return Math.min(((p.votesCount ?? 0) / holders) * 100, 100);
-  });
-  // 2% participation → 10 points; cap at 100
-  const participationScore = Math.min(avg(participationRates) * 5, 100);
+  // Real rollup counters across ALL proposals/votes for this DAO (these back
+  // the "X proposals" and "voters" figures shown on /daos and the landing).
+  const [propCountRow] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(proposals)
+    .where(eq(proposals.daoId, daoId));
+  const totalProposals = propCountRow?.n ?? 0;
+
+  const [voterCountRow] = await db
+    .select({ n: sql<number>`count(distinct ${votes.voterAddress})::int` })
+    .from(votes)
+    .where(eq(votes.daoId, daoId));
+  // Distinct voters ever seen across the DAO — our best proxy for the active
+  // electorate (we don't have on-chain holder counts without an RPC key).
+  const electorate = voterCountRow?.n ?? 0;
+
+  // 1. Participation: real turnout ratio — voters on each recent proposal vs
+  // the DAO's known electorate. No artificial multiplier; a proposal can't
+  // have more voters than the all-time distinct count, so the ratio is ≤ 1.
+  const turnoutRates =
+    electorate > 0
+      ? recentProps.map((p) => Math.min((p.votesCount ?? 0) / electorate, 1))
+      : [];
+  const avgParticipationRate = round2(avg(turnoutRates)); // 0–1
+  const participationScore = round(avgParticipationRate * 100);
 
   // 2. Power distribution: Gini across votes in recent proposals
   let powerScore = 50; // fallback if no votes data
@@ -104,11 +126,16 @@ export async function computeScoreForDao(daoId: string): Promise<{
       breakdown.manipulationResistance * SCORE_WEIGHTS.manipulationResistance,
   );
 
-  return { score, breakdown };
+  return { score, breakdown, totalProposals, totalVoters: electorate, avgParticipationRate };
 }
 
 function round(n: number): number {
   return Math.round(n * 100) / 100;
+}
+
+// 4-dp rounding for the 0–1 participation fraction (numeric(5,4) column).
+function round2(n: number): number {
+  return Math.round(n * 10000) / 10000;
 }
 
 export async function recomputeAllDaoScores(): Promise<{ updated: number; alerts: number }> {
@@ -125,6 +152,9 @@ export async function recomputeAllDaoScores(): Promise<{ updated: number; alerts
       .set({
         democracyScore: String(result.score),
         scoreBreakdown: result.breakdown as unknown as Record<string, number>,
+        totalProposals: result.totalProposals,
+        totalVoters: result.totalVoters,
+        avgParticipationRate: String(result.avgParticipationRate),
         scoreUpdatedAt: new Date(),
         updatedAt: new Date(),
       })
