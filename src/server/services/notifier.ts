@@ -6,8 +6,7 @@ import { shortenAddress } from '@/lib/utils';
 import type { Alert, Dao } from '../db/schema';
 import { notifyAlert } from '../db/notify';
 import { renderWhaleAlert } from '../email/render';
-
-const TG_API = 'https://api.telegram.org';
+import { sendTelegramMessage } from '@/lib/telegram';
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const EMAIL_FROM = process.env.EMAIL_FROM ?? 'DAO Sentinel <noreply@daosentinel.xyz>';
 const APP_BASE = process.env.NEXTAUTH_URL || 'https://www.daosentinel.xyz';
@@ -47,7 +46,7 @@ export async function publishAlert(alertId: string): Promise<void> {
         );
       for (const u of subs) {
         if (!u.telegramChatId) continue;
-        await sendTelegram(u.telegramChatId, formatAlertForTelegram(alert, dao));
+        await sendTelegramMessage(u.telegramChatId, formatAlertForTelegram(alert, dao));
       }
       await db
         .update(alerts)
@@ -157,14 +156,6 @@ function chunk<T>(arr: T[], size: number): T[][] {
   const out: T[][] = [];
   for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
   return out;
-}
-
-async function sendTelegram(chatId: string, text: string) {
-  await fetch(`${TG_API}/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
-  });
 }
 
 export function formatAlertForTelegram(alert: Alert, dao: Dao): string {

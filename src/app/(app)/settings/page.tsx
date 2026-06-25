@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { WatchlistEditor } from './WatchlistEditor';
 import { ApiKeyManager } from './ApiKeyManager';
+import { TelegramConnect } from './TelegramConnect';
+import { connectLink } from '@/lib/telegram';
 
 export const dynamic = 'force-dynamic';
 
@@ -70,17 +72,25 @@ export default async function SettingsPage() {
       </section>
 
       <section>
-        <h2 className="app-sec-title">Alert preferences</h2>
-        <div className="glass-card space-y-1 text-sm">
-          <div>
-            Email: <span className="mono text-[hsl(var(--text-dim))]">{user.alertEmail ? 'on' : 'off'}</span>
-          </div>
-          <div>
-            Telegram:{' '}
-            <span className="mono text-[hsl(var(--text-dim))]">
-              {user.alertTelegram ? `chat ${user.telegramChatId ?? '—'}` : 'off'}
-            </span>
-          </div>
+        <h2 className="app-sec-title">Telegram alerts</h2>
+        <div className="glass-card">
+          <TelegramConnect
+            connectUrl={connectLink(user.id)}
+            initialChatId={user.telegramChatId ?? null}
+            initialEnabled={Boolean(user.alertTelegram)}
+          />
+        </div>
+      </section>
+
+      <section>
+        <h2 className="app-sec-title">Email alerts</h2>
+        <div className="glass-card text-sm">
+          Email alerts:{' '}
+          <span className="mono text-[hsl(var(--text-dim))]">{user.alertEmail ? 'on' : 'off'}</span>
+          <p className="mt-2 text-xs text-[hsl(var(--text-dim))]">
+            Whale, swing and quorum alerts for your watched DAOs are emailed to{' '}
+            <span className="mono">{user.email}</span>.
+          </p>
         </div>
       </section>
     </div>

@@ -43,6 +43,15 @@ export const userRouter = router({
     return { ok: true };
   }),
 
+  disconnectTelegram: protectedProcedure.mutation(async ({ ctx }) => {
+    const email = ctx.session!.user!.email!;
+    await ctx.db
+      .update(users)
+      .set({ telegramChatId: null, alertTelegram: false })
+      .where(eq(users.email, email));
+    return { ok: true };
+  }),
+
   updateAlertPrefs: protectedProcedure
     .input(
       z.object({
