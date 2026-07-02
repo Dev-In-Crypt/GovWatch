@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { formatNumber, shortenAddress } from '@/lib/utils';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60; // ISR — public page, data changes on cron cadence
 
 export const metadata = {
   title: 'Delegates — DAO Sentinel',

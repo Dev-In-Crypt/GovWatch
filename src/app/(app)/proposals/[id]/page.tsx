@@ -12,7 +12,12 @@ import { ProposalBody } from '@/components/proposals/ProposalBody';
 import { SimilarProposals } from '@/components/proposals/SimilarProposals';
 import { formatNumber, formatUsdValue, shortenAddress, timeAgo, timeRemaining } from '@/lib/utils';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60; // ISR — public page, data changes on cron cadence
+
+// Render on demand, then cache (ISR). No params prebuilt at compile time.
+export function generateStaticParams() {
+  return [];
+}
 
 export async function generateMetadata({
   params,

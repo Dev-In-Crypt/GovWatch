@@ -16,6 +16,22 @@ export const SCORE_WEIGHTS = {
   manipulationResistance: 0.2,
 } as const;
 
+// One-line methodology hints surfaced as tooltips wherever a Democracy Score
+// axis is displayed. Honesty matters: participation is labeled as the proxy
+// it is, not as true token-holder turnout.
+export const METRIC_HINT: Record<string, string> = {
+  participation:
+    'Avg voters per recent proposal vs all distinct voters ever seen in this DAO. A proxy — we have no token-holder counts, so this is turnout within the known electorate.',
+  powerDistribution:
+    'How evenly voting power is spread: 100 − Gini coefficient across all votes on recent proposals. Higher = less whale-dominated.',
+  proposalDiversity:
+    'Unique proposal authors among the last 20 proposals (10+ distinct authors = 100). Low scores mean a few actors set the whole agenda.',
+  delegateAccountability:
+    'Share of this DAO’s top-20 delegates (by voting power) that vote on more than half of proposals.',
+  manipulationResistance:
+    'Share of recent proposals without a whale vote (>5% of total VP) or a last-minute outcome swing.',
+};
+
 export interface TrackedDao {
   snapshotSpaceId: string;
   name: string;

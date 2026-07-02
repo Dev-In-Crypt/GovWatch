@@ -7,6 +7,7 @@ import { ScoreGauge } from '@/components/charts/ScoreGauge';
 import { ProgressBar } from '@/components/ui/progress';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { formatNumber, formatUSD, formatPct, timeAgo } from '@/lib/utils';
+import { METRIC_HINT } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 
@@ -248,7 +249,11 @@ export default async function ComparePage({
           <h2 className="app-sec-title">Score breakdown</h2>
           <div className="glass-card space-y-4">
             {Object.keys(METRIC_LABEL).map((k) => (
-              <div key={k} className="grid grid-cols-[1fr_120px_1fr] items-center gap-4">
+              <div
+                key={k}
+                className="grid grid-cols-[1fr_120px_1fr] items-center gap-4"
+                title={METRIC_HINT[k]}
+              >
                 <div className="flex-1">
                   <div className="mb-1 flex justify-between text-xs mono">
                     <span className="text-[hsl(var(--text-faint))]">{METRIC_LABEL[k]}</span>

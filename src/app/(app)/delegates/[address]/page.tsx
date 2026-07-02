@@ -7,7 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { CrossDaoBlocs } from '@/components/delegates/CrossDaoBlocs';
 import { formatNumber, shortenAddress } from '@/lib/utils';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60; // ISR — public page, data changes on cron cadence
+
+// Render on demand, then cache (ISR). No params prebuilt at compile time.
+export function generateStaticParams() {
+  return [];
+}
 
 export async function generateMetadata({
   params,

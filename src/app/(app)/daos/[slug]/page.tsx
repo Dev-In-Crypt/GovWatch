@@ -10,8 +10,14 @@ import { RiskBadge } from '@/components/proposals/RiskBadge';
 import { ProgressBar } from '@/components/ui/progress';
 import { CompareWithPicker } from '@/components/daos/CompareWithPicker';
 import { formatNumber, formatPct, timeAgo, timeRemaining } from '@/lib/utils';
+import { METRIC_HINT } from '@/lib/constants';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60; // ISR — public page, data changes on cron cadence
+
+// Render on demand, then cache (ISR). No params prebuilt at compile time.
+export function generateStaticParams() {
+  return [];
+}
 
 export async function generateMetadata({
   params,
@@ -138,10 +144,18 @@ export default async function DaoProfilePage({ params }: { params: Promise<{ slu
       {/* Score breakdown */}
       {Object.keys(breakdown).length > 0 && (
         <div>
-          <h2 className="app-sec-title">Score breakdown</h2>
+          <div className="mb-4 flex items-baseline justify-between">
+            <h2 className="app-sec-title" style={{ marginBottom: 0 }}>Score breakdown</h2>
+            <Link
+              href="/docs"
+              className="text-xs mono text-[hsl(var(--indigo-bright))] hover:underline"
+            >
+              methodology →
+            </Link>
+          </div>
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
             {Object.entries(breakdown).map(([k, v]) => (
-              <div key={k} className="stat-cell">
+              <div key={k} className="stat-cell" title={METRIC_HINT[k]}>
                 <div className="lab">{METRIC_LABEL[k] ?? k}</div>
                 <div className="val">
                   {Number(v).toFixed(0)}

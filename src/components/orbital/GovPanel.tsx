@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import type { OrbitalDao } from './Planet';
+import { METRIC_HINT } from '@/lib/constants';
 
 const PROP_COLOR = {
   pass: 'hsl(var(--mint))',
@@ -87,7 +88,7 @@ export function GovPanel({
                 <div className="gov-sec-title">Governance Metrics</div>
                 <div className="gov-metrics">
                   {Object.entries(dao.breakdown).map(([k, v]) => (
-                    <div className="gov-metric" key={k}>
+                    <div className="gov-metric" key={k} title={METRIC_HINT[k]}>
                       <div className="gm-lab">{METRIC_LABEL[k] ?? k}</div>
                       <div className="gm-val">
                         {Number(v).toFixed(0)}

@@ -2,6 +2,8 @@
 
 > The public governance watchdog for DAOs. Every proposal explained in plain English. Every whale vote exposed. Every manipulation detected.
 
+A **free public good** — no paywalls, no paid tiers, no data resale. MIT-licensed, forkable, self-hostable. Live at [daosentinel.xyz](https://www.daosentinel.xyz).
+
 ## Quick start
 
 ```bash
@@ -13,7 +15,7 @@ docker compose up -d
 
 # 3. configure secrets
 cp .env.example .env
-# fill in OPENROUTER_API_KEY, RESEND_API_KEY, NEXTAUTH_SECRET (any random string), STRIPE_*…
+# fill in OPENROUTER_API_KEY, RESEND_API_KEY, NEXTAUTH_SECRET (any random string), CRON_SECRET…
 
 # 4. apply schema + seed DAOs
 npm run db:push
@@ -33,12 +35,11 @@ npm run dev   # http://localhost:3000
 
 - **Frontend & API**: Next.js 15 App Router, tRPC v11, Tailwind, shadcn-style UI primitives.
 - **DB**: PostgreSQL via Drizzle ORM. Schema in [src/server/db/schema.ts](src/server/db/schema.ts).
-- **Data pipeline**: Snapshot GraphQL hub → upsert into proposals/votes → whale & swing detection → alerts.
-- **AI**: OpenRouter with `google/gemini-2.5-flash` (configurable via `OPENROUTER_MODEL`) for proposal summaries and the weekly digest. OpenAI-compatible API — swap models without code changes.
-- **Cron**: Vercel Cron (defined in [vercel.json](vercel.json)) hits `/api/cron/*` every 5/10 minutes, daily, and weekly.
+- **Data pipeline**: Snapshot GraphQL (off-chain) + Tally GraphQL (on-chain Governors) → upsert into proposals/votes → whale & swing detection → alerts. Treasury from DeFiLlama, token prices from CoinGecko.
+- **AI**: OpenRouter with `google/gemini-2.5-flash` (configurable via `OPENROUTER_MODEL`) for proposal summaries and the weekly digest, plus `text-embedding-3-small` embeddings for similar-proposal search. OpenAI-compatible API — swap models without code changes.
+- **Cron**: GitHub Actions ([.github/workflows/cron.yml](.github/workflows/cron.yml)) hits `/api/cron/*` on 5/15-minute, 6-hourly, daily, and weekly schedules, with paginated walkers for the long jobs.
 - **Auth**: NextAuth v5 magic-link via Resend.
-- **Billing**: Stripe Checkout + webhooks → users.plan.
-- **Notifications**: Telegram bot + Discord webhook for whale alerts.
+- **Notifications**: Email (Resend), Telegram bot (account-linking flow), and per-user Discord webhooks for whale/swing/quorum alerts; real-time SSE feed via Postgres LISTEN/NOTIFY.
 
 ## Scripts
 
@@ -57,12 +58,16 @@ npm run dev   # http://localhost:3000
 | Path | Schedule |
 |---|---|
 | `/api/cron/sync-proposals` | `*/5 * * * *` |
-| `/api/cron/sync-votes` | `*/5 * * * *` |
-| `/api/cron/generate-summaries` | `*/10 * * * *` |
+| `/api/cron/sync-votes` | `*/5 * * * *` (paginated) |
+| `/api/cron/sync-tally` | `*/5 * * * *` (paginated; no-op without `TALLY_API_KEY`) |
+| `/api/cron/generate-summaries` | `*/15 * * * *` |
 | `/api/cron/compute-scores` | `0 2 * * *` (daily 02:00 UTC) |
+| `/api/cron/sync-treasuries` | `0 3 * * *` (daily 03:00 UTC) |
+| `/api/cron/rebuild-delegates` | `0 4 * * *` (daily 04:00 UTC, paginated) |
+| `/api/cron/sync-prices` | `0 */6 * * *` |
 | `/api/cron/send-digest` | `0 8 * * 1` (Monday 08:00 UTC) |
 
-Protect each with `Authorization: Bearer $CRON_SECRET`.
+Every endpoint requires `Authorization: Bearer $CRON_SECRET` and fails closed (503) if the secret is not configured.
 
 ## Key constants
 

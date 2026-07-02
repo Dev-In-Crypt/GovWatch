@@ -7,7 +7,12 @@ import { digests } from '@/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { Badge } from '@/components/ui/badge';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300; // ISR — public page, data changes on cron cadence
+
+// Render on demand, then cache (ISR). No params prebuilt at compile time.
+export function generateStaticParams() {
+  return [];
+}
 
 export async function generateMetadata({
   params,

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { desc, eq, and, isNotNull, ne, sql } from 'drizzle-orm';
+import { desc, eq, and, isNotNull, sql } from 'drizzle-orm';
 import { router, publicProcedure } from '../trpc';
 import { proposals, daos, votes } from '../../db/schema';
 import { cosineSimilarity } from '../../ai/openrouter';
@@ -88,26 +88,10 @@ export const proposalsRouter = router({
         .limit(1);
       if (!target?.embedding || target.embedding.length === 0) return [];
 
-      // Pull all other proposals with embeddings + their DAO + outcome metadata.
-      // Cap at 500 for safety; at < 100 rows cosine in JS is sub-50 ms.
-      const candidates = await ctx.db
-        .select({
-          id: proposals.id,
-          title: proposals.title,
-          state: proposals.state,
-          quorumReached: proposals.quorumReached,
-          votesCount: proposals.votesCount,
-          endTimestamp: proposals.endTimestamp,
-          embedding: proposals.embedding,
-          daoSlug: daos.slug,
-          daoName: daos.name,
-        })
-        .from(proposals)
-        .innerJoin(daos, eq(daos.id, proposals.daoId))
-        .where(and(isNotNull(proposals.embedding), ne(proposals.id, input.id)))
-        .limit(500);
+      const candidates = await loadSimilarityCandidates(ctx.db);
 
       const scored = candidates
+        .filter((c) => c.id !== input.id)
         .map((c) => ({
           id: c.id,
           title: c.title,
@@ -140,3 +124,55 @@ export const proposalsRouter = router({
         .limit(50);
     }),
 });
+
+// ---------------------------------------------------------------------------
+// Similarity candidates cache.
+//
+// The candidate set (≤500 rows × 1536-float embeddings ≈ 3 MB) was re-fetched
+// from Postgres on EVERY proposal-page view. It only changes when the
+// summaries cron embeds new proposals (*/15), so a short module-level TTL
+// cache removes the heavy query from the hot path. Per-warm-instance, which
+// is fine — staleness just means a brand-new proposal takes up to 10 minutes
+// to appear in "similar" lists. Not unstable_cache: the payload exceeds
+// Vercel Data Cache's 2 MB item limit.
+// ---------------------------------------------------------------------------
+interface SimilarityCandidate {
+  id: string;
+  title: string;
+  state: string;
+  quorumReached: boolean | null;
+  votesCount: number | null;
+  endTimestamp: Date;
+  embedding: number[] | null;
+  daoSlug: string;
+  daoName: string;
+}
+
+const CANDIDATE_TTL_MS = 10 * 60 * 1000;
+let candidateCache: { at: number; rows: SimilarityCandidate[] } | null = null;
+
+async function loadSimilarityCandidates(
+  db: typeof import('../../db').db,
+): Promise<SimilarityCandidate[]> {
+  if (candidateCache && Date.now() - candidateCache.at < CANDIDATE_TTL_MS) {
+    return candidateCache.rows;
+  }
+  const rows = await db
+    .select({
+      id: proposals.id,
+      title: proposals.title,
+      state: proposals.state,
+      quorumReached: proposals.quorumReached,
+      votesCount: proposals.votesCount,
+      endTimestamp: proposals.endTimestamp,
+      embedding: proposals.embedding,
+      daoSlug: daos.slug,
+      daoName: daos.name,
+    })
+    .from(proposals)
+    .innerJoin(daos, eq(daos.id, proposals.daoId))
+    .where(isNotNull(proposals.embedding))
+    .limit(500);
+  candidateCache = { at: Date.now(), rows };
+  return rows;
+}
