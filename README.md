@@ -39,7 +39,7 @@ npm run dev   # http://localhost:3000
 - **AI**: OpenRouter with `google/gemini-2.5-flash` (configurable via `OPENROUTER_MODEL`) for proposal summaries and the weekly digest, plus `text-embedding-3-small` embeddings for similar-proposal search. OpenAI-compatible API — swap models without code changes.
 - **Cron**: GitHub Actions ([.github/workflows/cron.yml](.github/workflows/cron.yml)) hits `/api/cron/*` on 5/15-minute, 6-hourly, daily, and weekly schedules, with paginated walkers for the long jobs.
 - **Auth**: NextAuth v5 magic-link via Resend.
-- **Notifications**: Email (Resend), Telegram bot (account-linking flow), and per-user Discord webhooks for whale/swing/quorum alerts; real-time SSE feed via Postgres LISTEN/NOTIFY.
+- **Notifications**: Email (Resend) and per-user Discord webhooks for whale/swing/quorum alerts; real-time SSE feed via Postgres LISTEN/NOTIFY. A Telegram account-linking flow is built but disabled until a bot token is provisioned.
 
 ## Scripts
 

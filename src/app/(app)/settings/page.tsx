@@ -27,6 +27,12 @@ export default async function SettingsPage() {
     .limit(1);
   if (!user) redirect('/login');
 
+  // Telegram section is shown only once the bot is configured (connectLink is
+  // non-null) or the user already linked a chat. The bot isn't live yet, so
+  // this stays hidden until TELEGRAM_BOT_USERNAME/TOKEN are set.
+  const telegramLink = connectLink(user.id);
+  const showTelegram = Boolean(telegramLink) || Boolean(user.telegramChatId);
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -56,7 +62,8 @@ export default async function SettingsPage() {
         <h2 className="app-sec-title">Watched DAOs</h2>
         <div className="glass-card">
           <p className="mb-4 text-sm text-[hsl(var(--text-dim))]">
-            Whale alerts, swings, and score drops for these DAOs ping you via Telegram &amp; email.
+            Whale alerts, swings, and score drops for these DAOs ping you via email (and Discord if
+            connected).
           </p>
           <WatchlistEditor initial={user.watchedDaos ?? []} />
         </div>
@@ -72,16 +79,18 @@ export default async function SettingsPage() {
         </div>
       </section>
 
-      <section>
-        <h2 className="app-sec-title">Telegram alerts</h2>
-        <div className="glass-card">
-          <TelegramConnect
-            connectUrl={connectLink(user.id)}
-            initialChatId={user.telegramChatId ?? null}
-            initialEnabled={Boolean(user.alertTelegram)}
-          />
-        </div>
-      </section>
+      {showTelegram && (
+        <section>
+          <h2 className="app-sec-title">Telegram alerts</h2>
+          <div className="glass-card">
+            <TelegramConnect
+              connectUrl={telegramLink}
+              initialChatId={user.telegramChatId ?? null}
+              initialEnabled={Boolean(user.alertTelegram)}
+            />
+          </div>
+        </section>
+      )}
 
       <section>
         <h2 className="app-sec-title">Discord alerts</h2>
