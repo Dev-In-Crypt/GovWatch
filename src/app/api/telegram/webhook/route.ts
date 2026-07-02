@@ -12,14 +12,18 @@ interface TgUpdate {
 }
 
 export async function POST(req: Request) {
-  // Shared-secret check (Telegram echoes the secret_token set at registration).
-  const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
-  if (secret && req.headers.get('x-telegram-bot-api-secret-token') !== secret) {
-    return NextResponse.json({ ok: false }, { status: 401 });
-  }
   // Graceful no-op until the bot is configured.
   if (!process.env.TELEGRAM_BOT_TOKEN) {
     return NextResponse.json({ ok: true, skipped: 'bot not configured' });
+  }
+  // Fail closed: once the bot is live, the shared webhook secret is mandatory —
+  // otherwise anyone who finds this URL can forge /start and /stop updates.
+  const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
+  if (!secret) {
+    return NextResponse.json({ ok: false, error: 'webhook secret not configured' }, { status: 503 });
+  }
+  if (req.headers.get('x-telegram-bot-api-secret-token') !== secret) {
+    return NextResponse.json({ ok: false }, { status: 401 });
   }
 
   let update: TgUpdate;
